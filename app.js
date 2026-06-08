@@ -4804,11 +4804,104 @@ function parseCSV(text) {
 // ---- Submit ----
 const FORM_ACTION = 'https://docs.google.com/forms/d/e/'+FORM_ID+'/formResponse';
 
+// Comprueba qué le falta a la apuesta antes de poder enviarla.
+// Devuelve un array de textos legibles (vacío => está todo completo).
+function getMissingSections() {
+  const missing = [];
+
+  ensureGroupsInitialized();
+  buildTPAllocation();
+  computeMatchTeams();
+
+  // 1) Fase de grupos: los 12 grupos confirmados
+  const unconfirmedGroups = GROUP_NAMES.filter(g => !isGroupComplete(g));
+  if (unconfirmedGroups.length > 0) {
+    missing.push('la fase de grupos (sin confirmar: ' +
+      unconfirmedGroups.map(g => 'Grupo ' + g).join(', ') + ')');
+  }
+
+  // 2) Mejores terceros: ranking confirmado
+  if (!state.thirdPlaceConfirmed) {
+    missing.push('los mejores terceros (ordénalos y pulsa "Confirmar ranking")');
+  }
+
+  // 3) Quiniela 1X2: los 3 partidos
+  const q = state.quiniela1x2 || {};
+  const quinielaPending = QUINIELA_1X2_MATCHES.filter(m => !q[m.key]).length;
+  if (quinielaPending > 0) {
+    missing.push('la quiniela 1X2 (faltan ' + quinielaPending + ' de ' +
+      QUINIELA_1X2_MATCHES.length + ' partidos)');
+  }
+
+  // 4) Eliminatoria: todos los cruces con ganador
+  const koRounds = [
+    { key: 'round32',       label: 'dieciseisavos' },
+    { key: 'round16',       label: 'octavos' },
+    { key: 'quarterfinals', label: 'cuartos' },
+    { key: 'semifinals',    label: 'semifinales' },
+    { key: 'final',         label: 'la final' },
+    { key: 'thirdPlace',    label: 'el 3.er puesto' }
+  ];
+  const koPending = koRounds
+    .filter(r => (KO_TREE[r.key] || []).some(m => !state.knockoutResults[m.num]))
+    .map(r => r.label);
+  if (koPending.length > 0) {
+    missing.push('la fase eliminatoria (faltan: ' + koPending.join(', ') + ')');
+  }
+
+  // 5) Premios: los 5
+  const awards = readAwards();
+  const awardsPending = AWARDS_CONFIG.filter(cfg => !awards[cfg.key]);
+  if (awardsPending.length > 0) {
+    missing.push('los premios (faltan: ' +
+      awardsPending.map(cfg => cfg.label).join(', ') + ')');
+  }
+
+  return missing;
+}
+
+// Aviso de apuesta incompleta, reutilizando el modal existente.
+function showIncompleteSubmissionModal(missing) {
+  const modal = document.getElementById('predictionModal');
+  const viewer = document.getElementById('predictionViewer');
+
+  if (!modal || !viewer) {
+    // Fallback por si el modal no estuviera disponible.
+    showToast('Te falta por rellenar: ' + missing.join('; ') +
+      '. Tu apuesta NO se ha enviado.', true);
+    return;
+  }
+
+  modal.style.display = 'flex';
+  viewer.innerHTML = `
+    <div class="scoring-help">
+      <h3>⚠️ Te falta algo por rellenar</h3>
+      <div class="scoring-help-card">
+        <p><strong>Te falta por rellenar:</strong></p>
+        <ul>
+          ${missing.map(item => '<li>' + escapeHtml(item) + '</li>').join('')}
+        </ul>
+      </div>
+      <p class="scoring-help-note">
+        Tu apuesta <strong>NO se ha enviado</strong>. Complétalo y vuelve a darle a
+        <strong>"¡A por la gloria!"</strong>.
+      </p>
+    </div>
+  `;
+}
+
 function submitPrediction() {
   if (isSubmissionClosed()) {
     showToast('El plazo se cerró el 11 de junio a las 19:00. Llegas tarde, sorry baby.', true);
     return;
   }
+
+  const missing = getMissingSections();
+  if (missing.length > 0) {
+    showIncompleteSubmissionModal(missing);
+    return;
+  }
+
   openNameModal();
 }
 
@@ -4829,6 +4922,14 @@ async function confirmSubmitPrediction() {
   if (isSubmissionClosed()) {
     showToast('El plazo ya está cerrado.', true);
     closeNameModal();
+    return;
+  }
+
+  // Segunda comprobación: no enviar si falta algo.
+  const missing = getMissingSections();
+  if (missing.length > 0) {
+    closeNameModal();
+    showIncompleteSubmissionModal(missing);
     return;
   }
 
