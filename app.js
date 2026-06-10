@@ -3879,6 +3879,14 @@ function openPrizesModal() {
             <li>🥉 3º clasificado: <strong>20% de la recaudación</strong></li>
           </ul>
         </div>
+
+        <div class="scoring-help-card">
+          <h4>🤝 ¿Y si hay empate?</h4>
+          <ul>
+            <li>Los empatados se reparten <strong>a partes iguales</strong> la suma de los premios de las posiciones que ocupan.</li>
+          </ul>
+          <p class="scoring-help-small">Ejemplo: si dos personas empatan en lo más alto, ocupan el 1º y el 2º puesto, así que se reparten ese dinero entre las dos: (50% + 30%) ÷ 2 = <strong>40% cada una</strong>. El siguiente clasificado se lleva el 20% y el cuarto se queda sin premio.</p>
+        </div>
       </div>
 
       <p class="scoring-help-note">
