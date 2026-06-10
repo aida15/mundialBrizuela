@@ -33,14 +33,15 @@ No hay premios millonarios ni contratos con clubes de primera. Solo el prestigio
 | 1º de grupo | 4 |
 | 2º de grupo | 3 |
 | 3º de grupo | 2 |
-| Mejor tercero clasificado (cada uno del top 8) | 1 |
-| Quiniela 1X2 (cada partido acertado) | 1 |
+| 4º de grupo | 0 |
+| Mejor tercero (cada uno de tu top 8 que entre en el top 8 real) | 1 |
+| Quiniela 1X2 (cada partido acertado, de 3) | 1 |
 
-> Acertar el 4º de grupo no suma puntos. En el 1X2 puntúa tanto el acierto del ganador como el del empate.
+> Acertar el 4º de grupo no suma. En el 1X2 puntúa por igual el **1** (gana el local), la **X** (empate) y el **2** (gana el visitante).
 
 ### Eliminatorias
 
-Los puntos de eliminatorias son **acumulativos**: cada equipo suma los puntos de **todas** las rondas que supera, no solo la última.
+Los puntos de eliminatorias son **acumulativos por equipo**: cada selección suma los puntos de **todas** las rondas que supera (siempre que tú la hubieras colocado ahí), no solo la última.
 
 | El equipo llega a… | Puntos |
 | ------------------ | ------ |
@@ -50,19 +51,21 @@ Los puntos de eliminatorias son **acumulativos**: cada equipo suma los puntos de
 | Semifinales | 10 |
 | Final (finalista) | 20 |
 | **Campeón** | **+30** |
-| Ganar el partido por el 3er puesto | 15 |
+| Ganar el partido por el 3.er puesto | 15 |
 
-> Ejemplo: si aciertas un finalista sumas 2 + 3 + 5 + 10 + 20 = **40 puntos** por ese equipo. Si además es tu campeón, +30 = **70 puntos** en total.
+> Ejemplo: si aciertas a un finalista sumas 2 + 3 + 5 + 10 + 20 = **40 puntos** por ese equipo. Si además es tu campeón, +30 = **70 puntos** en total.
+>
+> El campeón suma sus 30 puntos **además** de los 20 de finalista. El ganador del 3.er puesto suma sus 15 puntos por encima de lo que ya haya acumulado al llegar a semifinales.
 
 ### Premios individuales
 
 | Acierto | Puntos |
 | ------- | ------ |
-| Máximo Goleador | 10 |
-| Máximo Asistente | 5 |
-| Guante de Oro | 5 |
-| Equipo Más Goleador | 5 |
-| Equipo Más Goleado | 8 |
+| 🥇 Máximo Goleador | 10 |
+| 🎯 Máximo Asistente | 5 |
+| 🧤 Guante de Oro | 5 |
+| ⚽ Equipo Más Goleador | 5 |
+| 🥅 Equipo Más Goleado | 8 |
 
 ## ¿Quién ganará?
 
