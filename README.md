@@ -34,10 +34,17 @@ No hay premios millonarios ni contratos con clubes de primera. Solo el prestigio
 | 2º de grupo | 3 |
 | 3º de grupo | 2 |
 | 4º de grupo | 0 |
-| Mejor tercero (cada uno de tu top 8 que entre en el top 8 real) | 1 |
 | Quiniela 1X2 (cada partido acertado, de 3) | 1 |
 
 > Acertar el 4º de grupo no suma. En el 1X2 puntúa por igual el **1** (gana el local), la **X** (empate) y el **2** (gana el visitante).
+
+### Mejores terceros
+
+| Acierto | Puntos |
+| ------- | ------ |
+| Cada uno de tus 8 mejores terceros que acabe entre los 8 terceros reales | 1 |
+
+> Ordenas los 12 terceros de los grupos y tus **8 primeros** son los que apuestas que clasifican a dieciseisavos. Ganas 1 punto por cada uno de esos 8 que acabe realmente entre los 8 terceros clasificados (máximo **8 puntos**).
 
 ### Eliminatorias
 
