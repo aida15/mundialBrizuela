@@ -1,5 +1,5 @@
 /**
- * update-results.js — v3
+ * update-results.js — v4
  * Consulta football-data.org y genera results.js para la porra del Mundial 2026.
  */
 
@@ -78,38 +78,32 @@ const TEAM_ES = {
 
 function es(name) { return TEAM_ES[name] || name || ''; }
 
-// Extrae la letra del grupo de cualquier formato que devuelva la API
 function groupLetter(raw) {
   if (!raw) return '';
   let m = raw.match(/GROUP_([A-Z]+)/);
   if (m) return m[1];
   m = raw.match(/Group\s+([A-Z]+)/i);
   if (m) return m[1].toUpperCase();
-  // Si es solo "A", "B"...
   m = raw.match(/^([A-L])$/);
   if (m) return m[1];
   return '';
 }
 
-// ─── Partidos de quiniela 1X2 ─────────────────────────────────────────────────
-// IMPORTANTE: team1 y team2 son los nombres en español tal como aparecen
-// en la app. La clave se genera ordenando alfabéticamente ambos nombres.
-// El valor "1" significa que gana el equipo que queda PRIMERO al ordenar
-// alfabéticamente, "2" el que queda segundo, "X" empate.
-// Esto es independiente de quién sea local o visitante en el partido real.
+// ─── Quiniela 1X2 ─────────────────────────────────────────────────────────────
+// CRÍTICO: team1 y team2 deben coincidir EXACTAMENTE con los de app.js:
+//   { team1: 'México',  team2: 'Corea del Sur' }  → "1"=gana México,  "2"=gana Corea
+//   { team1: 'Escocia', team2: 'Marruecos'     }  → "1"=gana Escocia, "2"=gana Marruecos
+//   { team1: 'Uruguay', team2: 'España'         }  → "1"=gana Uruguay, "2"=gana España
+// La clave se genera igual que en app.js: [team1,team2].sort().join('__')
 const QUINIELA_MATCHES = [
-  { teamA: 'Corea del Sur', teamB: 'México'   }, // clave: Corea del Sur__México  → "1"=Corea, "2"=México
-  { teamA: 'Escocia',       teamB: 'Marruecos' }, // clave: Escocia__Marruecos     → "1"=Escocia, "2"=Marruecos
-  { teamA: 'España',        teamB: 'Uruguay'   }, // clave: España__Uruguay        → "1"=España, "2"=Uruguay
-].map(m => {
-  const sorted = [m.teamA, m.teamB].sort();
-  return {
-    key:   sorted.join('__'),
-    first: sorted[0],   // el que vale "1"
-    second: sorted[1],  // el que vale "2"
-    teams: new Set([m.teamA, m.teamB]),
-  };
-});
+  { team1: 'México',   team2: 'Corea del Sur' },
+  { team1: 'Escocia',  team2: 'Marruecos'     },
+  { team1: 'Uruguay',  team2: 'España'         },
+].map(m => ({
+  ...m,
+  key:   [m.team1, m.team2].sort().join('__'),
+  teams: new Set([m.team1, m.team2]),
+}));
 
 function apiGet(endpoint) {
   return new Promise((resolve, reject) => {
@@ -147,26 +141,30 @@ async function main() {
     if (match.status === 'FINISHED')
       finishedByGroup[letter] = (finishedByGroup[letter] || 0) + 1;
   }
-  console.log('  Partidos por grupo:', JSON.stringify(finishedByGroup));
+  console.log('  Partidos finalizados por grupo:', JSON.stringify(finishedByGroup));
+  console.log('  Total partidos por grupo:',       JSON.stringify(totalByGroup));
 
-  // ── Standings: solo grupos con todos los partidos jugados ─────────────────
+  // ── Standings: solo grupos con TODOS los partidos jugados ─────────────────
   const groupStandings = {};
   for (const standing of standingsData.standings || []) {
     if (standing.type !== 'TOTAL') continue;
     const letter = groupLetter(standing.group);
-    if (!letter) { console.log(`  ⚠️  No se pudo extraer letra de grupo: "${standing.group}"`); continue; }
-
+    if (!letter) {
+      console.log(`  ⚠️  Letra de grupo no reconocida: "${standing.group}"`);
+      continue;
+    }
     const total    = totalByGroup[letter]    || 6;
     const finished = finishedByGroup[letter] || 0;
     if (finished < total) {
-      console.log(`  Grupo ${letter}: ${finished}/${total} jugados — pendiente`);
+      console.log(`  Grupo ${letter}: ${finished}/${total} — pendiente, se omite`);
       continue;
     }
     groupStandings[letter] = standing.table.map(row => es(row.team.name));
-    console.log(`  Grupo ${letter}: ✅ cerrado → ${groupStandings[letter].join(', ')}`);
+    console.log(`  Grupo ${letter}: ✅ → ${groupStandings[letter].join(', ')}`);
   }
 
   // ── Quiniela 1X2 ──────────────────────────────────────────────────────────
+  // "1" = gana team1 (según app.js), "2" = gana team2, "X" = empate
   const quiniela1x2 = Object.fromEntries(QUINIELA_MATCHES.map(m => [m.key, '']));
 
   for (const match of allMatches) {
@@ -175,27 +173,24 @@ async function main() {
     const home = es(match.homeTeam?.name);
     const away = es(match.awayTeam?.name);
 
-    // Buscamos si este partido corresponde a alguno de la quiniela
     const qm = QUINIELA_MATCHES.find(m => m.teams.has(home) && m.teams.has(away));
     if (!qm) continue;
 
     const hg = match.score?.fullTime?.home ?? 0;
     const ag = match.score?.fullTime?.away ?? 0;
 
-    let winner = '';
-    if      (hg > ag) winner = home;
-    else if (ag > hg) winner = away;
-    // empate → winner queda ''
-
-    if (winner === '') {
-      quiniela1x2[qm.key] = 'X';
-    } else if (winner === qm.first) {
-      quiniela1x2[qm.key] = '1';
+    let result;
+    if (hg === ag) {
+      result = 'X';
     } else {
-      quiniela1x2[qm.key] = '2';
+      // Quién ganó el partido
+      const winner = hg > ag ? home : away;
+      // "1" si ganó team1 (según la definición de app.js), "2" si ganó team2
+      result = winner === qm.team1 ? '1' : '2';
     }
 
-    console.log(`  Quiniela [${qm.key}]: ${home} ${hg}-${ag} ${away} → "${quiniela1x2[qm.key]}" (gana ${winner || 'nadie/empate'})`);
+    quiniela1x2[qm.key] = result;
+    console.log(`  Quiniela [${qm.key}]: ${home} ${hg}-${ag} ${away} → "${result}" (team1=${qm.team1}, team2=${qm.team2})`);
   }
 
   // ── Eliminatorias ─────────────────────────────────────────────────────────
@@ -218,8 +213,8 @@ async function main() {
     const roundKey = STAGE_MAP[match.stage];
     if (!roundKey || match.status !== 'FINISHED') continue;
 
-    const home = es(match.homeTeam?.name);
-    const away = es(match.awayTeam?.name);
+    const home   = es(match.homeTeam?.name);
+    const away   = es(match.awayTeam?.name);
     const winner = match.score?.winner === 'HOME_TEAM' ? home
                  : match.score?.winner === 'AWAY_TEAM' ? away : '';
     const entry = { match: match.id, home, away, winner };
@@ -243,7 +238,7 @@ async function main() {
     .filter(Boolean);
   const finalists = champion && runnerUp ? [champion, runnerUp] : [];
 
-  // ── Mejores terceros (solo grupos cerrados) ───────────────────────────────
+  // ── Mejores terceros (solo de grupos cerrados) ────────────────────────────
   const thirdTeams = [];
   for (const standing of standingsData.standings || []) {
     if (standing.type !== 'TOTAL') continue;
@@ -251,10 +246,10 @@ async function main() {
     if (!groupStandings[letter]) continue;
     const row = standing.table.find(r => r.position === 3);
     if (row) thirdTeams.push({
-      name: es(row.team.name),
+      name:   es(row.team.name),
       points: row.points,
-      gd: row.goalDifference,
-      gf: row.goalsFor,
+      gd:     row.goalDifference,
+      gf:     row.goalsFor,
     });
   }
   thirdTeams.sort((a,b) => b.points-a.points || b.gd-a.gd || b.gf-a.gf);
@@ -288,7 +283,7 @@ const RESULTS = ${JSON.stringify(RESULTS, null, 2)};
 
   console.log(`\n✅  results.js actualizado (${now})`);
   console.log(`   Grupos cerrados: ${Object.keys(groupStandings).length}/12`);
-  console.log(`   Quiniela 1X2:    ${Object.values(quiniela1x2).filter(v=>v).length}/3`);
+  console.log(`   Quiniela 1X2:    ${JSON.stringify(quiniela1x2)}`);
   console.log(`   Campeón:         ${champion || '(pendiente)'}`);
 }
 
