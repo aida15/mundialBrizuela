@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-06-19T22:04:11.482Z
+   Última actualización: 2026-06-20T00:09:23.723Z
    ============================================================ */
 
 const RESULTS = {
@@ -9,7 +9,7 @@ const RESULTS = {
   "thirdPlace": [],
   "quiniela1x2": {
     "Corea del Sur__México": "1",
-    "Escocia__Marruecos": "",
+    "Escocia__Marruecos": "2",
     "España__Uruguay": ""
   },
   "knockout": {
