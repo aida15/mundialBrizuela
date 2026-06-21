@@ -3,7 +3,7 @@ name: Actualizar resultados Mundial 2026
 on:
   schedule:
     # Cada hora en punto (UTC). Ajusta si quieres más o menos frecuencia.
-    - cron: '0 * * * *'
+    - cron: '*/15 * * * *'
   # Permite lanzarlo manualmente desde la pestaña Actions de GitHub
   workflow_dispatch:
 
