@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-06-21T17:28:01.981Z
+   Última actualización: 2026-06-21T18:02:32.118Z
    ============================================================ */
 
 const RESULTS = {
