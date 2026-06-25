@@ -3810,6 +3810,7 @@ function openScoringHelpModal() {
             <li>Acertar el 1º del grupo: <strong>${puntuaciones.grupos.posicion.primero} pts</strong></li>
             <li>Acertar el 2º del grupo: <strong>${puntuaciones.grupos.posicion.segundo} pts</strong></li>
             <li>Acertar el 3º del grupo: <strong>${puntuaciones.grupos.posicion.tercero} pts</strong></li>
+			<li>Acertar el 4º del grupo: <strong>${puntuaciones.grupos.posicion.cuarto} pts</strong></li>
             <li>Cada mejor tercero (top 8) acertado: <strong>${puntuaciones.grupos.mejorTercero} pt</strong></li>
             <li>Quiniela 1X2 (3 partidos): <strong>${puntuaciones.quiniela1x2} pt por acierto</strong></li>
           </ul>
