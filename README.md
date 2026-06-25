@@ -33,7 +33,7 @@ No hay premios millonarios ni contratos con clubes de primera. Solo el prestigio
 | 1º de grupo | 4 |
 | 2º de grupo | 3 |
 | 3º de grupo | 2 |
-| 4º de grupo | 0 |
+| 4º de grupo | 1 |
 | Quiniela 1X2 (cada partido acertado, de 3) | 1 |
 
 > Acertar el 4º de grupo no suma. En el 1X2 puntúa por igual el **1** (gana el local), la **X** (empate) y el **2** (gana el visitante).
