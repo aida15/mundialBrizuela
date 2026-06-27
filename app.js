@@ -3970,19 +3970,18 @@ function renderPredictionReview(entry) {
     <div class="prediction-review">
       <h3>La predicción de ${entry.name} — ${entry.score} pts</h3>
 
-      <h4>Fase de grupos</h4>
+      <h4 class="group-modal-section-title"><span>🌍</span> FASE DE GRUPOS</h4>
       <div class="review-groups" id="reviewGroups"></div>
 
-      <h4>🎯 Quiniela 1X2</h4>
+      <h4 class="group-modal-section-title"><span>🎯</span> QUINIELA 1X2</h4>
       <div class="review-section" id="reviewQuiniela1x2"></div>
 
-      <h4>🥉 Mejores terceros</h4>
+      <h4 class="group-modal-section-title"><span>🥉</span> MEJORES TERCEROS</h4>
       <div class="review-section" id="reviewThirdPlace"></div>
 
-      <h4>Knockout</h4>
       <div class="review-section" id="reviewKnockout"></div>
 
-      <h4>Logros individuales</h4>
+      <h4 class="group-modal-section-title"><span>⭐</span> LOGROS INDIVIDUALES</h4>
       <div class="review-section" id="reviewAwards"></div>
     </div>
   `;
