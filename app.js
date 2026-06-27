@@ -22,7 +22,7 @@ const puntuaciones = {
       primero: 4,
       segundo: 3,
       tercero: 2,
-      cuarto: 1
+      cuarto: 0
     },
     mejorTercero: 1
   },
@@ -3810,7 +3810,6 @@ function openScoringHelpModal() {
             <li>Acertar el 1º del grupo: <strong>${puntuaciones.grupos.posicion.primero} pts</strong></li>
             <li>Acertar el 2º del grupo: <strong>${puntuaciones.grupos.posicion.segundo} pts</strong></li>
             <li>Acertar el 3º del grupo: <strong>${puntuaciones.grupos.posicion.tercero} pts</strong></li>
-			<li>Acertar el 4º del grupo: <strong>${puntuaciones.grupos.posicion.cuarto} pts</strong></li>
             <li>Cada mejor tercero (top 8) acertado: <strong>${puntuaciones.grupos.mejorTercero} pt</strong></li>
             <li>Quiniela 1X2 (3 partidos): <strong>${puntuaciones.quiniela1x2} pt por acierto</strong></li>
           </ul>
@@ -3977,6 +3976,9 @@ function renderPredictionReview(entry) {
       <h4>🎯 Quiniela 1X2</h4>
       <div class="review-section" id="reviewQuiniela1x2"></div>
 
+      <h4>🥉 Mejores terceros</h4>
+      <div class="review-section" id="reviewThirdPlace"></div>
+
       <h4>Knockout</h4>
       <div class="review-section" id="reviewKnockout"></div>
 
@@ -3987,6 +3989,7 @@ function renderPredictionReview(entry) {
 
   renderReviewGroups(entry.prediction, entry);
   renderReviewQuiniela1x2(entry.prediction);
+  renderReviewThirdPlace(entry.prediction);
   renderReviewKnockout(entry.prediction);
   renderReviewAwards(entry.prediction);
 }
@@ -4722,6 +4725,52 @@ function renderReviewQuiniela1x2(prediction) {
   });
 }
 
+function renderReviewThirdPlace(prediction) {
+  const container = document.getElementById('reviewThirdPlace');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const predTop8 = (prediction.thirdPlace || []).filter(Boolean).slice(0, 8);
+  const realTop8 = new Set((RESULTS.thirdPlace || []).filter(Boolean).slice(0, 8));
+  const resolved = realTop8.size > 0;
+
+  if (!resolved) {
+    container.innerHTML = '<p class="review-pending-note">Aún no hay mejores terceros confirmados.</p>';
+    return;
+  }
+
+  if (predTop8.length === 0) {
+    container.innerHTML = '<p class="review-pending-note">No apostó por ningún mejor tercero.</p>';
+    return;
+  }
+
+  const totalPoints = predTop8.reduce((sum, team) => sum + (realTop8.has(team) ? puntuaciones.grupos.mejorTercero : 0), 0);
+
+  const header = document.createElement('div');
+  header.className = 'quiniela1x2-review-row';
+  header.innerHTML = `<strong>Equipos apostados (top 8):</strong> ${renderReviewPointsBadge(totalPoints, 'Total puntos mejores terceros')}`;
+  container.appendChild(header);
+
+  predTop8.forEach((team, idx) => {
+    const correct = realTop8.has(team);
+    const points  = correct ? puntuaciones.grupos.mejorTercero : 0;
+
+    const row = document.createElement('div');
+    row.className = 'quiniela1x2-review-row' + (correct ? ' review-correct' : (resolved ? ' review-wrong' : ' review-pending'));
+    row.innerHTML = `
+      <div class="quiniela1x2-review-match">
+        <span class="position-badge">${idx + 1}</span>
+        <span class="team-flag ${getTeamFlagClass(team)}"></span>
+        <span class="team-name">${escapeHtml(team)}</span>
+      </div>
+      <div class="quiniela1x2-review-picks">
+        ${renderReviewPointsBadge(points, correct ? 'Acertado' : 'No clasificó entre los 8')}
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
 function renderReviewAwards(prediction) {
   const container = document.getElementById('reviewAwards');
   container.className = 'awards-section';
@@ -5098,4 +5147,3 @@ document.addEventListener('keydown', e => {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-	
