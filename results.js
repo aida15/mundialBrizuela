@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-06-27T23:46:22.085Z
+   Última actualización: 2026-06-28T04:41:41.335Z
    ============================================================ */
 
 const RESULTS = {
@@ -60,6 +60,18 @@ const RESULTS = {
       "Senegal",
       "Irak"
     ],
+    "J": [
+      "Argentina",
+      "Austria",
+      "Argelia",
+      "Jordania"
+    ],
+    "K": [
+      "Colombia",
+      "Portugal",
+      "RD del Congo",
+      "Uzbekistán"
+    ],
     "L": [
       "Inglaterra",
       "Croacia",
@@ -68,14 +80,14 @@ const RESULTS = {
     ]
   },
   "thirdPlace": [
+    "RD del Congo",
     "Suecia",
     "Ecuador",
     "Ghana",
     "Bosnia y Herzegovina",
+    "Argelia",
     "Paraguay",
-    "Senegal",
-    "Irán",
-    "Corea del Sur"
+    "Senegal"
   ],
   "quiniela1x2": {
     "Corea del Sur__México": "1",
