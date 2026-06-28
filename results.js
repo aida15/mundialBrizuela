@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-06-28T20:19:13.304Z
+   Última actualización: 2026-06-28T21:41:06.264Z
    ============================================================ */
 
 const RESULTS = {
@@ -95,7 +95,9 @@ const RESULTS = {
     "España__Uruguay": "2"
   },
   "knockout": {
-    "round32": [],
+    "round32": [
+      "Canadá"
+    ],
     "round16": [],
     "quarterfinals": [],
     "semifinals": [],
@@ -106,7 +108,14 @@ const RESULTS = {
     "final": "",
     "thirdPlace": "",
     "matches": {
-      "round32": [],
+      "round32": [
+        {
+          "match": 537417,
+          "home": "Sudáfrica",
+          "away": "Canadá",
+          "winner": "Canadá"
+        }
+      ],
       "round16": [],
       "quarterfinals": [],
       "semifinals": [],
