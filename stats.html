@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evolución del Ranking — Mundial Brizuela 2026</title>
+  <script src="results.js?v=stats"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #FFD700;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 0.85rem;
+      margin-bottom: 28px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      color: #ccc;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #2a2a2a; border-color: #FFD700; color: #FFD700; }
+    .btn.active { background: #FFD700; color: #000; border-color: #FFD700; font-weight: 700; }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto 32px;
+      background: #111;
+      border-radius: 12px;
+      border: 1px solid #222;
+      padding: 20px 20px 12px;
+    }
+
+    canvas { display: block; width: 100% !important; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+    .legend-item.hidden { opacity: 0.3; }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .ranking-table {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto 32px;
+      border-collapse: collapse;
+    }
+    .ranking-table th {
+      background: #1a1a1a;
+      color: #FFD700;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #333;
+    }
+    .ranking-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #1e1e1e;
+      font-size: 0.88rem;
+    }
+    .ranking-table tr:hover td { background: #161616; }
+    .rank-1 td { color: #FFD700; font-weight: 700; }
+    .rank-2 td { color: #C0C0C0; }
+    .rank-3 td { color: #CD7F32; }
+
+    .events-log {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .event-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e1e1e;
+      font-size: 0.85rem;
+    }
+    .event-label {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      color: #FFD700;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .event-winners {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .event-winner-tag {
+      background: #1e2e1e;
+      border: 1px solid #2a4a2a;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.78rem;
+      color: #81C784;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
+      padding: 60px 0;
+      font-size: 1rem;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #aaa;
+      margin: 28px 0 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📈 Evolución del Ranking</h1>
+<p class="subtitle">Mundial Brizuela 2026 · Solo para uso interno</p>
+
+<div class="controls" id="controls"></div>
+
+<div class="chart-wrap">
+  <canvas id="chart" height="420"></canvas>
+  <div class="legend" id="legend"></div>
+</div>
+
+<p class="section-title">Ranking actual</p>
+<div id="rankingTable"></div>
+
+<p class="section-title">Log de eventos puntuables</p>
+<div class="events-log" id="eventsLog"></div>
+
+<div class="loading" id="loading">Cargando apuestas...</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── Configuración ──────────────────────────────────────────────────────────────
+const LEADERBOARD_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwtplM_3RIGPCdhcvoTaxtZroVzwplR7f16y4t-hUO6RDezlWd_0n6gcHiUEkveeJvHj813rySC6Fb/pub?output=csv';
+
+const PTS = {
+  grupos: { primero: 4, segundo: 3, tercero: 2, cuarto: 1 },
+  mejorTercero: 1,
+  quiniela1x2: 1,
+  eliminatorias: { round32: 2, round16: 3, quarterfinals: 5, semifinals: 10, finalist: 20, champion: 30, thirdPlace: 15 },
+  premios: { topScorer: 10, topAssister: 5, goldenGlove: 5, topScoringTeam: 5, mostConcededTeam: 8 }
+};
+
+const QUINIELA_MATCHES = [
+  { team1: 'México',  team2: 'Corea del Sur', group: 'A' },
+  { team1: 'Escocia', team2: 'Marruecos',     group: 'C' },
+  { team1: 'Uruguay', team2: 'España',         group: 'H' },
+].map(m => ({ ...m, key: [m.team1, m.team2].sort().join('__') }));
+
+const AWARDS_CONFIG = [
+  { key: 'topScorer',       label: 'Máximo Goleador',    points: PTS.premios.topScorer },
+  { key: 'topAssister',     label: 'Máximo Asistente',   points: PTS.premios.topAssister },
+  { key: 'goldenGlove',     label: 'Guante de Oro',      points: PTS.premios.goldenGlove },
+  { key: 'topScoringTeam',  label: 'Equipo más goleador',points: PTS.premios.topScoringTeam },
+  { key: 'mostConcededTeam',label: 'Equipo más goleado', points: PTS.premios.mostConcededTeam },
+];
+
+const COLORS = [
+  '#FFD700','#FF6B6B','#64B5F6','#81C784','#FF8A65',
+  '#BA68C8','#4DD0E1','#F06292','#AED581','#FFB74D',
+  '#90A4AE','#A1887F','#E57373','#4FC3F7','#DCE775',
+  '#7986CB','#26C6DA','#FFCA28','#EF5350','#66BB6A'
+];
+
+// ── CSV Parser ─────────────────────────────────────────────────────────────────
+function parseCSV(csv) {
+  const rows = [];
+  let row = [], value = '', inQ = false;
+  for (let i = 0; i < csv.length; i++) {
+    const c = csv[i], n = csv[i+1];
+    if (c === '"' && inQ && n === '"') { value += '"'; i++; }
+    else if (c === '"') inQ = !inQ;
+    else if (c === ',' && !inQ) { row.push(value); value = ''; }
+    else if ((c === '\n' || c === '\r') && !inQ) {
+      if (value || row.length) { row.push(value); rows.push(row); }
+      row = []; value = '';
+      if (c === '\r' && n === '\n') i++;
+    } else value += c;
+  }
+  if (value || row.length) { row.push(value); rows.push(row); }
+  return rows;
+}
+
+// ── Construir lista de eventos ordenados ───────────────────────────────────────
+// Cada evento representa un "momento" en que se puede ganar puntos.
+// La gráfica tendrá un punto por evento.
+function buildEvents(results) {
+  const events = [];
+  const R = results;
+
+  // 1. Grupos (uno por grupo, cuando el grupo se cierra)
+  const groups = R.groups || {};
+  Object.keys(groups).sort().forEach(g => {
+    if (groups[g] && groups[g].length >= 4) {
+      events.push({ id: `grupo_${g}`, label: `Grupo ${g}`, type: 'grupo', group: g });
+    }
+  });
+
+  // 2. Mejores terceros (un solo evento cuando se confirman)
+  const thirds = (R.thirdPlace || []).filter(Boolean);
+  if (thirds.length > 0) {
+    events.push({ id: 'terceros', label: 'Mejores terceros', type: 'terceros' });
+  }
+
+  // 3. Quiniela 1X2 (un evento por partido)
+  const q = R.quiniela1x2 || {};
+  QUINIELA_MATCHES.forEach(m => {
+    if (q[m.key]) {
+      events.push({ id: `q_${m.key}`, label: `1X2: ${m.team1} vs ${m.team2}`, type: 'quiniela', key: m.key });
+    }
+  });
+
+  // 4. Eliminatorias (un evento por ronda)
+  const ko = R.knockout || {};
+  const koRounds = [
+    { key: 'round32',       label: 'Dieciseisavos' },
+    { key: 'round16',       label: 'Octavos' },
+    { key: 'quarterfinals', label: 'Cuartos' },
+    { key: 'semifinals',    label: 'Semis' },
+    { key: 'finalist',      label: 'Finalistas' },
+    { key: 'champion',      label: 'Campeón' },
+    { key: 'thirdPlace',    label: '3er puesto' },
+  ];
+  koRounds.forEach(r => {
+    let hasData = false;
+    if (r.key === 'finalist')   hasData = (ko.finalists || []).filter(Boolean).length >= 2;
+    else if (r.key === 'champion') hasData = Boolean(ko.champion);
+    else if (r.key === 'thirdPlace') hasData = Boolean(ko.thirdPlaceWinner);
+    else hasData = (ko[r.key] || []).length > 0 ||
+                   (ko.matches?.[r.key] || []).some(m => m.winner);
+    if (hasData) {
+      events.push({ id: `ko_${r.key}`, label: r.label, type: 'knockout', round: r.key });
+    }
+  });
+
+  // 5. Premios (uno por premio)
+  const awards = R.awards || {};
+  AWARDS_CONFIG.forEach(cfg => {
+    if (awards[cfg.key]) {
+      events.push({ id: `award_${cfg.key}`, label: cfg.label, type: 'award', key: cfg.key });
+    }
+  });
+
+  return events;
+}
+
+// ── Calcular puntos de un participante hasta un evento (incluido) ──────────────
+function scoreUpTo(prediction, results, events, upToIndex) {
+  let score = 0;
+  const R = results;
+  const eventsToScore = events.slice(0, upToIndex + 1);
+  const eventIds = new Set(eventsToScore.map(e => e.id));
+
+  // Grupos
+  Object.keys(R.groups || {}).sort().forEach(g => {
+    if (!eventIds.has(`grupo_${g}`)) return;
+    const pred = prediction.groups?.[g] || [];
+    const real = R.groups[g] || [];
+    if (real[0] && pred[0] === real[0]) score += PTS.grupos.primero;
+    if (real[1] && pred[1] === real[1]) score += PTS.grupos.segundo;
+    if (real[2] && pred[2] === real[2]) score += PTS.grupos.tercero;
+    if (real[3] && pred[3] === real[3]) score += PTS.grupos.cuarto;
+  });
+
+  // Mejores terceros
+  if (eventIds.has('terceros')) {
+    const predTop8 = (prediction.thirdPlace || []).filter(Boolean).slice(0, 8);
+    const realTop8 = new Set((R.thirdPlace || []).filter(Boolean).slice(0, 8));
+    predTop8.forEach(t => { if (realTop8.has(t)) score += PTS.mejorTercero; });
+  }
+
+  // Quiniela
+  QUINIELA_MATCHES.forEach(m => {
+    if (!eventIds.has(`q_${m.key}`)) return;
+    const real = R.quiniela1x2?.[m.key];
+    const pred = prediction.quiniela1x2?.[m.key];
+    if (real && pred && real === pred) score += PTS.quiniela1x2;
+  });
+
+  // Knockout
+  const ko = R.knockout || {};
+  const predKo = prediction.knockout || {};
+
+  // Construir sets de equipos reales y predichos por ronda
+  function realTeamsInRound(round) {
+    const s = new Set();
+    if (round === 'finalist') {
+      (ko.finalists || []).forEach(t => t && s.add(t));
+    } else if (round === 'champion') {
+      if (ko.champion) s.add(ko.champion);
+    } else if (round === 'thirdPlace') {
+      if (ko.thirdPlaceWinner) s.add(ko.thirdPlaceWinner);
+    } else {
+      // Intentar desde matches primero, luego desde array simple
+      const matches = ko.matches?.[round] || [];
+      if (matches.length) {
+        matches.forEach(m => { if (m.team1) s.add(m.team1); if (m.team2) s.add(m.team2); });
+      } else {
+        (ko[round] || []).forEach(t => t && s.add(t));
+      }
+    }
+    return s;
+  }
+
+  function predTeamsInRound(round) {
+    const s = new Set();
+    if (round === 'finalist') {
+      (predKo.finalists || []).forEach(t => t && s.add(t));
+    } else if (round === 'champion') {
+      if (predKo.champion) s.add(predKo.champion);
+    } else if (round === 'thirdPlace') {
+      if (predKo.thirdPlaceWinner) s.add(predKo.thirdPlaceWinner);
+    } else {
+      const matches = predKo.matches?.[round] || [];
+      if (matches.length) {
+        matches.forEach(m => { if (m.team1) s.add(m.team1); if (m.team2) s.add(m.team2); });
+      } else {
+        (predKo[round] || []).forEach(t => t && s.add(t));
+      }
+    }
+    return s;
+  }
+
+  ['round32','round16','quarterfinals','semifinals','finalist','champion','thirdPlace'].forEach(round => {
+    if (!eventIds.has(`ko_${round}`)) return;
+    const pts = round === 'finalist' ? PTS.eliminatorias.finalist
+              : round === 'champion' ? PTS.eliminatorias.champion
+              : round === 'thirdPlace' ? PTS.eliminatorias.thirdPlace
+              : PTS.eliminatorias[round] || 0;
+    const real = realTeamsInRound(round);
+    const pred = predTeamsInRound(round);
+    pred.forEach(t => { if (real.has(t)) score += pts; });
+  });
+
+  // Premios
+  const awards = R.awards || {};
+  AWARDS_CONFIG.forEach(cfg => {
+    if (!eventIds.has(`award_${cfg.key}`)) return;
+    const real = awards[cfg.key];
+    const pred = prediction.awards?.[cfg.key];
+    if (real && pred && real === pred) score += cfg.points;
+  });
+
+  return score;
+}
+
+// ── Calcular quién gana puntos en cada evento ──────────────────────────────────
+function buildEventWinners(submissions, results, events) {
+  return events.map((event, idx) => {
+    const winners = [];
+    submissions.forEach(s => {
+      const before = idx > 0 ? scoreUpTo(s.prediction, results, events, idx - 1) : 0;
+      const after  = scoreUpTo(s.prediction, results, events, idx);
+      if (after > before) winners.push({ name: s.name, gained: after - before });
+    });
+    return { event, winners };
+  });
+}
+
+// ── Gráfica ────────────────────────────────────────────────────────────────────
+let chartInstance = null;
+let hiddenSeries = new Set();
+
+function renderChart(submissions, results, events) {
+  const ctx = document.getElementById('chart').getContext('2d');
+
+  const labels = ['Inicio', ...events.map(e => e.label)];
+
+  const datasets = submissions.map((s, i) => {
+    const color = COLORS[i % COLORS.length];
+    const data = [0, ...events.map((_, idx) => scoreUpTo(s.prediction, results, events, idx))];
+    return {
+      label: s.name,
+      data,
+      borderColor: color,
+      backgroundColor: color + '22',
+      pointBackgroundColor: color,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      borderWidth: 2.5,
+      tension: 0.3,
+      hidden: hiddenSeries.has(s.name),
+      fill: false,
+    };
+  });
+
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} pts`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#888', font: { size: 11 }, maxRotation: 35 },
+          grid: { color: '#1e1e1e' }
+        },
+        y: {
+          ticks: { color: '#888' },
+          grid: { color: '#1e1e1e' },
+          title: { display: true, text: 'Puntos', color: '#666' }
+        }
+      }
+    }
+  });
+
+  // Leyenda personalizada con toggle
+  const legendEl = document.getElementById('legend');
+  legendEl.innerHTML = '';
+  submissions.forEach((s, i) => {
+    const color = COLORS[i % COLORS.length];
+    const item = document.createElement('div');
+    item.className = 'legend-item' + (hiddenSeries.has(s.name) ? ' hidden' : '');
+    item.innerHTML = `<span class="legend-dot" style="background:${color}"></span><span>${s.name}</span>`;
+    item.addEventListener('click', () => {
+      if (hiddenSeries.has(s.name)) hiddenSeries.delete(s.name);
+      else hiddenSeries.add(s.name);
+      renderChart(submissions, results, events);
+    });
+    legendEl.appendChild(item);
+  });
+}
+
+// ── Tabla de ranking actual ────────────────────────────────────────────────────
+function renderRankingTable(submissions, results, events) {
+  const ranked = submissions.map(s => ({
+    name: s.name,
+    score: events.length > 0 ? scoreUpTo(s.prediction, results, events, events.length - 1) : 0
+  })).sort((a, b) => b.score - a.score);
+
+  const table = document.createElement('table');
+  table.className = 'ranking-table';
+  table.innerHTML = `<thead><tr><th>#</th><th>Participante</th><th>Puntos</th></tr></thead><tbody></tbody>`;
+  const tbody = table.querySelector('tbody');
+
+  ranked.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.className = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+    tr.innerHTML = `<td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td><td>${r.name}</td><td>${r.score} pts</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const wrap = document.getElementById('rankingTable');
+  wrap.innerHTML = '';
+  wrap.appendChild(table);
+}
+
+// ── Log de eventos ─────────────────────────────────────────────────────────────
+function renderEventsLog(eventWinners) {
+  const el = document.getElementById('eventsLog');
+  el.innerHTML = '';
+
+  if (eventWinners.length === 0) {
+    el.innerHTML = '<p style="color:#666;text-align:center;padding:20px">Aún no hay eventos puntuables.</p>';
+    return;
+  }
+
+  [...eventWinners].reverse().forEach(({ event, winners }) => {
+    const item = document.createElement('div');
+    item.className = 'event-item';
+
+    const winnersHtml = winners.length
+      ? winners.map(w => `<span class="event-winner-tag">${w.name} <strong>+${w.gained}pt</strong></span>`).join('')
+      : '<span style="color:#555;font-size:0.8rem">Nadie suma puntos aquí</span>';
+
+    item.innerHTML = `
+      <span class="event-label">${event.label}</span>
+      <div class="event-winners">${winnersHtml}</div>
+    `;
+    el.appendChild(item);
+  });
+}
+
+// ── Controles de filtro de fase ────────────────────────────────────────────────
+function renderControls(events, submissions, results) {
+  const phases = [
+    { id: 'all',    label: 'Todo' },
+    { id: 'grupos', label: 'Grupos' },
+    { id: 'ko',     label: 'Eliminatorias' },
+    { id: 'awards', label: 'Premios' },
+  ];
+
+  const wrap = document.getElementById('controls');
+  wrap.innerHTML = '';
+  let activePhase = 'all';
+
+  phases.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'btn' + (p.id === 'all' ? ' active' : '');
+    btn.textContent = p.label;
+    btn.addEventListener('click', () => {
+      activePhase = p.id;
+      wrap.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const filtered = p.id === 'all' ? events
+        : p.id === 'grupos' ? events.filter(e => e.type === 'grupo' || e.type === 'terceros' || e.type === 'quiniela')
+        : p.id === 'ko'     ? events.filter(e => e.type === 'knockout')
+        : events.filter(e => e.type === 'award');
+
+      const eventWinners = buildEventWinners(submissions, results, filtered);
+      renderChart(submissions, results, filtered);
+      renderEventsLog(eventWinners);
+    });
+    wrap.appendChild(btn);
+  });
+
+  // Botón mostrar/ocultar todos
+  const btnAll = document.createElement('button');
+  btnAll.className = 'btn';
+  btnAll.textContent = 'Mostrar todos';
+  btnAll.addEventListener('click', () => {
+    hiddenSeries.clear();
+    renderChart(submissions, results, events);
+  });
+  wrap.appendChild(btnAll);
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
+async function main() {
+  try {
+    const res = await fetch(LEADERBOARD_CSV_URL);
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+
+    const submissions = [];
+    rows.slice(1).forEach(row => {
+      const rawJson = row[1];
+      if (!rawJson) return;
+      try {
+        const prediction = JSON.parse(rawJson);
+        submissions.push({ name: prediction.name || 'Anónimo', prediction });
+      } catch (e) {}
+    });
+
+    if (submissions.length === 0) {
+      document.getElementById('loading').textContent = 'No hay apuestas en el Google Sheets.';
+      return;
+    }
+
+    document.getElementById('loading').style.display = 'none';
+
+    const results = typeof RESULTS !== 'undefined' ? RESULTS : {};
+    const events = buildEvents(results);
+    const eventWinners = buildEventWinners(submissions, results, events);
+
+    renderControls(events, submissions, results);
+    renderChart(submissions, results, events);
+    renderRankingTable(submissions, results, events);
+    renderEventsLog(eventWinners);
+
+  } catch (e) {
+    document.getElementById('loading').textContent = 'Error al cargar los datos: ' + e.message;
+    console.error(e);
+  }
+}
+
+main();
+</script>
+</body>
+</html>
