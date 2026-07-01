@@ -4,170 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Evolución del Ranking — Mundial Brizuela 2026</title>
-  <script src="results.js?v=stats"></script>
+  <script src="results.js?v=stats3"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: #0a0a0a;
-      color: #e0e0e0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      min-height: 100vh;
-      padding: 24px 16px;
-    }
-
-    h1 {
-      text-align: center;
-      font-size: 1.6rem;
-      font-weight: 900;
-      color: #FFD700;
-      margin-bottom: 6px;
-      letter-spacing: 1px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #888;
-      font-size: 0.85rem;
-      margin-bottom: 28px;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-
-    .btn {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      color: #ccc;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: all 0.15s;
-    }
+    body { background: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; padding: 24px 16px; }
+    h1 { text-align: center; font-size: 1.6rem; font-weight: 900; color: #FFD700; margin-bottom: 6px; letter-spacing: 1px; }
+    .subtitle { text-align: center; color: #888; font-size: 0.85rem; margin-bottom: 28px; }
+    .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+    .btn { background: #1e1e1e; border: 1px solid #333; color: #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.15s; }
     .btn:hover { background: #2a2a2a; border-color: #FFD700; color: #FFD700; }
     .btn.active { background: #FFD700; color: #000; border-color: #FFD700; font-weight: 700; }
-
-    .chart-wrap {
-      position: relative;
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto 32px;
-      background: #111;
-      border-radius: 12px;
-      border: 1px solid #222;
-      padding: 20px 20px 12px;
-    }
-
+    .chart-wrap { position: relative; width: 100%; max-width: 1100px; margin: 0 auto 32px; background: #111; border-radius: 12px; border: 1px solid #222; padding: 20px 20px 12px; }
     canvas { display: block; width: 100% !important; }
-
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      justify-content: center;
-      margin-top: 16px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.82rem;
-      cursor: pointer;
-      opacity: 1;
-      transition: opacity 0.2s;
-    }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; margin-top: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer; opacity: 1; transition: opacity 0.2s; }
     .legend-item.hidden { opacity: 0.3; }
-    .legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .ranking-table {
-      width: 100%;
-      max-width: 700px;
-      margin: 0 auto 32px;
-      border-collapse: collapse;
-    }
-    .ranking-table th {
-      background: #1a1a1a;
-      color: #FFD700;
-      padding: 10px 14px;
-      text-align: left;
-      font-size: 0.8rem;
-      letter-spacing: 0.5px;
-      border-bottom: 2px solid #333;
-    }
-    .ranking-table td {
-      padding: 9px 14px;
-      border-bottom: 1px solid #1e1e1e;
-      font-size: 0.88rem;
-    }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .ranking-table { width: 100%; max-width: 700px; margin: 0 auto 32px; border-collapse: collapse; }
+    .ranking-table th { background: #1a1a1a; color: #FFD700; padding: 10px 14px; text-align: left; font-size: 0.8rem; letter-spacing: 0.5px; border-bottom: 2px solid #333; }
+    .ranking-table td { padding: 9px 14px; border-bottom: 1px solid #1e1e1e; font-size: 0.88rem; }
     .ranking-table tr:hover td { background: #161616; }
     .rank-1 td { color: #FFD700; font-weight: 700; }
     .rank-2 td { color: #C0C0C0; }
     .rank-3 td { color: #CD7F32; }
-
-    .events-log {
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    .event-item {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 10px 0;
-      border-bottom: 1px solid #1e1e1e;
-      font-size: 0.85rem;
-    }
-    .event-label {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 6px;
-      padding: 3px 8px;
-      white-space: nowrap;
-      color: #FFD700;
-      font-size: 0.75rem;
-      flex-shrink: 0;
-    }
-    .event-winners {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-    .event-winner-tag {
-      background: #1e2e1e;
-      border: 1px solid #2a4a2a;
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-size: 0.78rem;
-      color: #81C784;
-    }
-
-    .loading {
-      text-align: center;
-      color: #666;
-      padding: 60px 0;
-      font-size: 1rem;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: 1rem;
-      font-weight: 700;
-      color: #aaa;
-      margin: 28px 0 14px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
+    .ranking-table td.clickable { cursor: pointer; text-decoration: underline dotted; color: #64B5F6; }
+    .ranking-table td.clickable:hover { color: #FFD700; }
+    .events-log { max-width: 700px; margin: 0 auto; }
+    .event-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #1e1e1e; font-size: 0.85rem; }
+    .event-label { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 3px 8px; white-space: nowrap; color: #FFD700; font-size: 0.75rem; flex-shrink: 0; }
+    .event-winners { display: flex; flex-wrap: wrap; gap: 4px; }
+    .event-winner-tag { background: #1e2e1e; border: 1px solid #2a4a2a; border-radius: 4px; padding: 2px 7px; font-size: 0.78rem; color: #81C784; }
+    .loading { text-align: center; color: #666; padding: 60px 0; font-size: 1rem; }
+    .section-title { text-align: center; font-size: 1rem; font-weight: 700; color: #aaa; margin: 28px 0 14px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .player-detail { max-width: 700px; margin: 0 auto 32px; background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px; display: none; }
+    .player-detail.visible { display: block; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #888; }
+    .detail-pts { font-weight: 700; color: #81C784; }
+    .detail-pts.zero { color: #555; }
+    .detail-section { color: #FFD700; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; padding: 10px 0 4px; text-transform: uppercase; }
+    .btn-close-detail { background: #1e1e1e; border: 1px solid #444; color: #aaa; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-bottom: 14px; }
+    .btn-close-detail:hover { color: #FFD700; border-color: #FFD700; }
   </style>
 </head>
 <body>
@@ -176,7 +54,6 @@
 <p class="subtitle">Mundial Brizuela 2026 · Solo para uso interno</p>
 
 <div class="controls" id="controls"></div>
-
 <div class="chart-wrap">
   <canvas id="chart" height="420"></canvas>
   <div class="legend" id="legend"></div>
@@ -185,6 +62,9 @@
 <p class="section-title">Ranking actual</p>
 <div id="rankingTable"></div>
 
+<p class="section-title" id="detailTitle" style="display:none">Detalle del jugador</p>
+<div class="player-detail" id="playerDetail"></div>
+
 <p class="section-title">Log de eventos puntuables</p>
 <div class="events-log" id="eventsLog"></div>
 
@@ -192,439 +72,407 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// ── Configuración ──────────────────────────────────────────────────────────────
 const LEADERBOARD_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwtplM_3RIGPCdhcvoTaxtZroVzwplR7f16y4t-hUO6RDezlWd_0n6gcHiUEkveeJvHj813rySC6Fb/pub?output=csv';
 
 const PTS = {
-  grupos: { primero: 4, segundo: 3, tercero: 2, cuarto: 1 },
+  grupos: { primero:4, segundo:3, tercero:2, cuarto:1 },
   mejorTercero: 1,
   quiniela1x2: 1,
-  eliminatorias: { round32: 2, round16: 3, quarterfinals: 5, semifinals: 10, finalist: 20, champion: 30, thirdPlace: 15 },
-  premios: { topScorer: 10, topAssister: 5, goldenGlove: 5, topScoringTeam: 5, mostConcededTeam: 8 }
+  eliminatorias: { round32:2, round16:3, quarterfinals:5, semifinals:10, finalist:20, champion:30, thirdPlace:15 },
+  premios: { topScorer:10, topAssister:5, goldenGlove:5, topScoringTeam:5, mostConcededTeam:8 }
 };
 
 const QUINIELA_MATCHES = [
-  { team1: 'México',  team2: 'Corea del Sur', group: 'A' },
-  { team1: 'Escocia', team2: 'Marruecos',     group: 'C' },
-  { team1: 'Uruguay', team2: 'España',         group: 'H' },
-].map(m => ({ ...m, key: [m.team1, m.team2].sort().join('__') }));
+  { team1:'México',  team2:'Corea del Sur', group:'A' },
+  { team1:'Escocia', team2:'Marruecos',     group:'C' },
+  { team1:'Uruguay', team2:'España',         group:'H' },
+].map(m => ({ ...m, key:[m.team1,m.team2].sort().join('__') }));
 
 const AWARDS_CONFIG = [
-  { key: 'topScorer',       label: 'Máximo Goleador',    points: PTS.premios.topScorer },
-  { key: 'topAssister',     label: 'Máximo Asistente',   points: PTS.premios.topAssister },
-  { key: 'goldenGlove',     label: 'Guante de Oro',      points: PTS.premios.goldenGlove },
-  { key: 'topScoringTeam',  label: 'Equipo más goleador',points: PTS.premios.topScoringTeam },
-  { key: 'mostConcededTeam',label: 'Equipo más goleado', points: PTS.premios.mostConcededTeam },
+  { key:'topScorer',        label:'🥇 Máximo Goleador',     points:PTS.premios.topScorer },
+  { key:'topAssister',      label:'🎯 Máximo Asistente',    points:PTS.premios.topAssister },
+  { key:'goldenGlove',      label:'🧤 Guante de Oro',       points:PTS.premios.goldenGlove },
+  { key:'topScoringTeam',   label:'⚽ Equipo más goleador', points:PTS.premios.topScoringTeam },
+  { key:'mostConcededTeam', label:'🥅 Equipo más goleado',  points:PTS.premios.mostConcededTeam },
 ];
 
-const COLORS = [
-  '#FFD700','#FF6B6B','#64B5F6','#81C784','#FF8A65',
-  '#BA68C8','#4DD0E1','#F06292','#AED581','#FFB74D',
-  '#90A4AE','#A1887F','#E57373','#4FC3F7','#DCE775',
-  '#7986CB','#26C6DA','#FFCA28','#EF5350','#66BB6A'
-];
+const COLORS = ['#FFD700','#FF6B6B','#64B5F6','#81C784','#FF8A65','#BA68C8','#4DD0E1','#F06292','#AED581','#FFB74D','#90A4AE','#A1887F','#E57373','#4FC3F7','#DCE775','#7986CB','#26C6DA','#FFCA28','#EF5350','#66BB6A'];
 
-// ── CSV Parser ─────────────────────────────────────────────────────────────────
-function parseCSV(csv) {
-  const rows = [];
-  let row = [], value = '', inQ = false;
-  for (let i = 0; i < csv.length; i++) {
-    const c = csv[i], n = csv[i+1];
-    if (c === '"' && inQ && n === '"') { value += '"'; i++; }
-    else if (c === '"') inQ = !inQ;
-    else if (c === ',' && !inQ) { row.push(value); value = ''; }
-    else if ((c === '\n' || c === '\r') && !inQ) {
-      if (value || row.length) { row.push(value); rows.push(row); }
-      row = []; value = '';
-      if (c === '\r' && n === '\n') i++;
-    } else value += c;
+// ── Lógica de equipos en cada ronda KO ───────────────────────────────────────
+// Para RESULTS: participantes = knockout.participants.ronda (team1+team2 todos los partidos)
+//               Si no hay participants, usa team1+team2 de knockout.matches.ronda
+//               Si tampoco, para round32 usa los clasificados de grupos
+// Para apuestas: team1+team2 de knockout.matches.ronda (los partidos que apostaron)
+
+function teamsInKORound(ko, round, groups, thirdPlace) {
+  const s = new Set();
+
+  // Nuevo formato con participants
+  const parts = (ko.participants || {})[round] || [];
+  if (parts.length) {
+    parts.forEach(m => { if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2); });
+    return s;
   }
-  if (value || row.length) { row.push(value); rows.push(row); }
-  return rows;
+
+  // Matches (terminados o apostados): team1+team2
+  const matches = (ko.matches || {})[round] || [];
+  matches.forEach(m => { if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2); });
+  if (s.size) return s;
+
+  // Fallback para round32 en RESULTS cuando aún no hay datos KO:
+  // los 32 clasificados = 1º y 2º de cada grupo + 8 mejores terceros
+  if (round === 'round32' && groups) {
+    Object.values(groups).forEach(g => { if(g[0]) s.add(g[0]); if(g[1]) s.add(g[1]); });
+    (thirdPlace || []).slice(0,8).forEach(t => t && s.add(t));
+  }
+
+  return s;
 }
 
-// ── Construir lista de eventos ordenados ───────────────────────────────────────
-// Cada evento representa un "momento" en que se puede ganar puntos.
-// La gráfica tendrá un punto por evento.
+function getChampion(ko)    { return ko.champion || ''; }
+function getRunnerUp(ko)    { return ko.runnerUp || ''; }
+function getThirdWinner(ko) { return ko.thirdPlaceWinner || ko.thirdPlace || ''; }
+function getFinalists(ko)   {
+  if ((ko.finalists||[]).filter(Boolean).length >= 2) return ko.finalists.filter(Boolean);
+  const c = getChampion(ko), r = getRunnerUp(ko);
+  return [c,r].filter(Boolean);
+}
+
+// ── Calcular puntos KO completos ──────────────────────────────────────────────
+function calcKOPoints(predKO, realKO, predGroups, predThirdPlace) {
+  let score = 0;
+
+  ['round32','round16','quarterfinals','semifinals'].forEach(r => {
+    const realTeams = teamsInKORound(realKO, r, null, null);
+    const predTeams = teamsInKORound(predKO, r, predGroups, predThirdPlace);
+    predTeams.forEach(t => { if(realTeams.has(t)) score += PTS.eliminatorias[r]; });
+  });
+
+  // Finalistas
+  const realFin = new Set(getFinalists(realKO));
+  const predFin = new Set(getFinalists(predKO));
+  predFin.forEach(t => { if(realFin.has(t)) score += PTS.eliminatorias.finalist; });
+
+  // Campeón
+  const rc = getChampion(realKO), pc = getChampion(predKO);
+  if (rc && pc && rc === pc) score += PTS.eliminatorias.champion;
+
+  // 3er puesto
+  const rt = getThirdWinner(realKO), pt = getThirdWinner(predKO);
+  if (rt && pt && rt === pt) score += PTS.eliminatorias.thirdPlace;
+
+  return score;
+}
+
+// ── Score completo ────────────────────────────────────────────────────────────
+function scoreAll(prediction, results) {
+  let score = 0;
+
+  Object.keys(results.groups || {}).forEach(g => {
+    const real = results.groups[g] || [], pred = (prediction.groups||{})[g] || [];
+    if(real[0]&&pred[0]===real[0]) score+=PTS.grupos.primero;
+    if(real[1]&&pred[1]===real[1]) score+=PTS.grupos.segundo;
+    if(real[2]&&pred[2]===real[2]) score+=PTS.grupos.tercero;
+    if(real[3]&&pred[3]===real[3]) score+=PTS.grupos.cuarto;
+  });
+
+  const predTop8 = (prediction.thirdPlace||[]).filter(Boolean).slice(0,8);
+  const realTop8 = new Set((results.thirdPlace||[]).filter(Boolean).slice(0,8));
+  predTop8.forEach(t => { if(realTop8.has(t)) score+=PTS.mejorTercero; });
+
+  QUINIELA_MATCHES.forEach(m => {
+    const r=(results.quiniela1x2||{})[m.key], p=(prediction.quiniela1x2||{})[m.key];
+    if(r&&p&&r===p) score+=PTS.quiniela1x2;
+  });
+
+  score += calcKOPoints(prediction.knockout||{}, results.knockout||{}, prediction.groups, prediction.thirdPlace);
+
+  const realA=results.awards||{}, predA=prediction.awards||{};
+  AWARDS_CONFIG.forEach(cfg => { if(realA[cfg.key]&&predA[cfg.key]&&realA[cfg.key]===predA[cfg.key]) score+=cfg.points; });
+
+  return score;
+}
+
+// ── Desglose detallado ────────────────────────────────────────────────────────
+function scoreBreakdown(prediction, results) {
+  const lines = [];
+  let gTotal=0, tTotal=0, qTotal=0, koTotal=0, aTotal=0;
+
+  lines.push({section:'🌍 FASE DE GRUPOS'});
+  Object.keys(results.groups||{}).sort().forEach(g => {
+    const real=results.groups[g]||[], pred=(prediction.groups||{})[g]||[];
+    let pts=0;
+    if(real[0]&&pred[0]===real[0]) pts+=4;
+    if(real[1]&&pred[1]===real[1]) pts+=3;
+    if(real[2]&&pred[2]===real[2]) pts+=2;
+    if(real[3]&&pred[3]===real[3]) pts+=1;
+    lines.push({label:`Grupo ${g}`,pts}); gTotal+=pts;
+  });
+  lines.push({label:'SUBTOTAL GRUPOS',pts:gTotal,bold:true});
+
+  lines.push({section:'🥉 MEJORES TERCEROS'});
+  const predTop8=(prediction.thirdPlace||[]).filter(Boolean).slice(0,8);
+  const realTop8=new Set((results.thirdPlace||[]).filter(Boolean).slice(0,8));
+  predTop8.forEach(t=>{if(realTop8.has(t))tTotal++;});
+  lines.push({label:`Acertados (${tTotal}/8)`,pts:tTotal});
+
+  lines.push({section:'🎯 QUINIELA 1X2'});
+  QUINIELA_MATCHES.forEach(m=>{
+    const r=(results.quiniela1x2||{})[m.key],p=(prediction.quiniela1x2||{})[m.key],ok=r&&p&&r===p;
+    const pts=ok?1:0;
+    lines.push({label:`${m.team1} vs ${m.team2} (pred:${p||'—'} real:${r||'—'})`,pts}); qTotal+=pts;
+  });
+  lines.push({label:'SUBTOTAL QUINIELA',pts:qTotal,bold:true});
+
+  lines.push({section:'🏆 ELIMINATORIAS'});
+  const predKO=prediction.knockout||{}, realKO=results.knockout||{};
+  const roundLabels={round32:'Dieciseisavos',round16:'Octavos',quarterfinals:'Cuartos',semifinals:'Semis'};
+  ['round32','round16','quarterfinals','semifinals'].forEach(r=>{
+    const realT=teamsInKORound(realKO,r,null,null);
+    const predT=teamsInKORound(predKO,r,prediction.groups,prediction.thirdPlace);
+    let pts=0; predT.forEach(t=>{if(realT.has(t))pts+=PTS.eliminatorias[r];});
+    lines.push({label:`${roundLabels[r]} (${predT.size} apostados, ${realT.size} reales confirmados)`,pts}); koTotal+=pts;
+  });
+  const realFin=new Set(getFinalists(realKO)), predFin=new Set(getFinalists(predKO));
+  let finPts=0; predFin.forEach(t=>{if(realFin.has(t))finPts+=20;}); lines.push({label:`Finalistas (${[...predFin].join(',')})`,pts:finPts}); koTotal+=finPts;
+  const rc=getChampion(realKO),pc=getChampion(predKO),cPts=(rc&&pc&&rc===pc)?30:0;
+  lines.push({label:`Campeón (pred:${pc||'—'} real:${rc||'—'})`,pts:cPts}); koTotal+=cPts;
+  const rt=getThirdWinner(realKO),pt=getThirdWinner(predKO),tPts=(rt&&pt&&rt===pt)?15:0;
+  lines.push({label:`3er puesto (pred:${pt||'—'} real:${rt||'—'})`,pts:tPts}); koTotal+=tPts;
+  lines.push({label:'SUBTOTAL ELIMINATORIAS',pts:koTotal,bold:true});
+
+  lines.push({section:'⭐ PREMIOS'});
+  const realA=results.awards||{},predA=prediction.awards||{};
+  AWARDS_CONFIG.forEach(cfg=>{
+    const ok=realA[cfg.key]&&predA[cfg.key]&&realA[cfg.key]===predA[cfg.key];
+    const pts=ok?cfg.points:0;
+    lines.push({label:`${cfg.label} (${predA[cfg.key]||'—'})`,pts}); aTotal+=pts;
+  });
+  lines.push({label:'SUBTOTAL PREMIOS',pts:aTotal,bold:true});
+
+  return {lines, total:gTotal+tTotal+qTotal+koTotal+aTotal};
+}
+
+// ── Eventos para la gráfica ───────────────────────────────────────────────────
 function buildEvents(results) {
   const events = [];
-  const R = results;
-
-  // 1. Grupos (uno por grupo, cuando el grupo se cierra)
-  const groups = R.groups || {};
-  Object.keys(groups).sort().forEach(g => {
-    if (groups[g] && groups[g].length >= 4) {
-      events.push({ id: `grupo_${g}`, label: `Grupo ${g}`, type: 'grupo', group: g });
-    }
+  Object.keys(results.groups||{}).sort().forEach(g => {
+    if((results.groups[g]||[]).length>=4)
+      events.push({id:`grupo_${g}`,label:`Grupo ${g}`,type:'grupo',group:g});
   });
-
-  // 2. Mejores terceros (un solo evento cuando se confirman)
-  const thirds = (R.thirdPlace || []).filter(Boolean);
-  if (thirds.length > 0) {
-    events.push({ id: 'terceros', label: 'Mejores terceros', type: 'terceros' });
-  }
-
-  // 3. Quiniela 1X2 (un evento por partido)
-  const q = R.quiniela1x2 || {};
-  QUINIELA_MATCHES.forEach(m => {
-    if (q[m.key]) {
-      events.push({ id: `q_${m.key}`, label: `1X2: ${m.team1} vs ${m.team2}`, type: 'quiniela', key: m.key });
-    }
+  if((results.thirdPlace||[]).filter(Boolean).length>0)
+    events.push({id:'terceros',label:'Mejores terceros',type:'terceros'});
+  QUINIELA_MATCHES.forEach(m=>{
+    if((results.quiniela1x2||{})[m.key])
+      events.push({id:`q_${m.key}`,label:`1X2: ${m.team1} vs ${m.team2}`,type:'quiniela',key:m.key});
   });
-
-  // 4. Eliminatorias (un evento por ronda)
-  const ko = R.knockout || {};
-  const koRounds = [
-    { key: 'round32',       label: 'Dieciseisavos' },
-    { key: 'round16',       label: 'Octavos' },
-    { key: 'quarterfinals', label: 'Cuartos' },
-    { key: 'semifinals',    label: 'Semis' },
-    { key: 'finalist',      label: 'Finalistas' },
-    { key: 'champion',      label: 'Campeón' },
-    { key: 'thirdPlace',    label: '3er puesto' },
-  ];
-  koRounds.forEach(r => {
-    let hasData = false;
-    if (r.key === 'finalist')   hasData = (ko.finalists || []).filter(Boolean).length >= 2;
-    else if (r.key === 'champion') hasData = Boolean(ko.champion);
-    else if (r.key === 'thirdPlace') hasData = Boolean(ko.thirdPlaceWinner);
-    else hasData = (ko[r.key] || []).length > 0 ||
-                   (ko.matches?.[r.key] || []).some(m => m.winner);
-    if (hasData) {
-      events.push({ id: `ko_${r.key}`, label: r.label, type: 'knockout', round: r.key });
-    }
+  const ko=results.knockout||{};
+  [{key:'round32',label:'Dieciseisavos'},{key:'round16',label:'Octavos'},{key:'quarterfinals',label:'Cuartos'},{key:'semifinals',label:'Semis'},{key:'finalist',label:'Finalistas'},{key:'champion',label:'Campeón'},{key:'thirdPlace',label:'3er puesto'}]
+  .forEach(r=>{
+    let has=false;
+    if(r.key==='finalist')    has=(ko.finalists||[]).filter(Boolean).length>=2;
+    else if(r.key==='champion')   has=Boolean(ko.champion);
+    else if(r.key==='thirdPlace') has=Boolean(ko.thirdPlaceWinner);
+    else has=teamsInKORound(ko,r.key,null,null).size>0;
+    if(has) events.push({id:`ko_${r.key}`,label:r.label,type:'knockout',round:r.key});
   });
-
-  // 5. Premios (uno por premio)
-  const awards = R.awards || {};
-  AWARDS_CONFIG.forEach(cfg => {
-    if (awards[cfg.key]) {
-      events.push({ id: `award_${cfg.key}`, label: cfg.label, type: 'award', key: cfg.key });
-    }
+  AWARDS_CONFIG.forEach(cfg=>{
+    if((results.awards||{})[cfg.key])
+      events.push({id:`award_${cfg.key}`,label:cfg.label.replace(/^.\s/,''),type:'award',key:cfg.key});
   });
-
   return events;
 }
 
-// ── Calcular puntos de un participante hasta un evento (incluido) ──────────────
 function scoreUpTo(prediction, results, events, upToIndex) {
-  let score = 0;
-  const R = results;
-  const eventsToScore = events.slice(0, upToIndex + 1);
-  const eventIds = new Set(eventsToScore.map(e => e.id));
+  const ids = new Set(events.slice(0,upToIndex+1).map(e=>e.id));
+  let score=0;
+  const R=results;
 
-  // Grupos
-  Object.keys(R.groups || {}).sort().forEach(g => {
-    if (!eventIds.has(`grupo_${g}`)) return;
-    const pred = prediction.groups?.[g] || [];
-    const real = R.groups[g] || [];
-    if (real[0] && pred[0] === real[0]) score += PTS.grupos.primero;
-    if (real[1] && pred[1] === real[1]) score += PTS.grupos.segundo;
-    if (real[2] && pred[2] === real[2]) score += PTS.grupos.tercero;
-    if (real[3] && pred[3] === real[3]) score += PTS.grupos.cuarto;
+  Object.keys(R.groups||{}).sort().forEach(g=>{
+    if(!ids.has(`grupo_${g}`)) return;
+    const real=R.groups[g]||[],pred=(prediction.groups||{})[g]||[];
+    if(real[0]&&pred[0]===real[0]) score+=4;
+    if(real[1]&&pred[1]===real[1]) score+=3;
+    if(real[2]&&pred[2]===real[2]) score+=2;
+    if(real[3]&&pred[3]===real[3]) score+=1;
   });
 
-  // Mejores terceros
-  if (eventIds.has('terceros')) {
-    const predTop8 = (prediction.thirdPlace || []).filter(Boolean).slice(0, 8);
-    const realTop8 = new Set((R.thirdPlace || []).filter(Boolean).slice(0, 8));
-    predTop8.forEach(t => { if (realTop8.has(t)) score += PTS.mejorTercero; });
+  if(ids.has('terceros')){
+    const p8=(prediction.thirdPlace||[]).filter(Boolean).slice(0,8);
+    const r8=new Set((R.thirdPlace||[]).filter(Boolean).slice(0,8));
+    p8.forEach(t=>{if(r8.has(t))score+=1;});
   }
 
-  // Quiniela
-  QUINIELA_MATCHES.forEach(m => {
-    if (!eventIds.has(`q_${m.key}`)) return;
-    const real = R.quiniela1x2?.[m.key];
-    const pred = prediction.quiniela1x2?.[m.key];
-    if (real && pred && real === pred) score += PTS.quiniela1x2;
+  QUINIELA_MATCHES.forEach(m=>{
+    if(!ids.has(`q_${m.key}`)) return;
+    const r=(R.quiniela1x2||{})[m.key],p=(prediction.quiniela1x2||{})[m.key];
+    if(r&&p&&r===p) score+=1;
   });
 
-  // Knockout
-  const ko = R.knockout || {};
-  const predKo = prediction.knockout || {};
-
-  // Construir sets de equipos reales y predichos por ronda
-  function realTeamsInRound(round) {
-    const s = new Set();
-    if (round === 'finalist') {
-      (ko.finalists || []).forEach(t => t && s.add(t));
-    } else if (round === 'champion') {
-      if (ko.champion) s.add(ko.champion);
-    } else if (round === 'thirdPlace') {
-      if (ko.thirdPlaceWinner) s.add(ko.thirdPlaceWinner);
-    } else {
-      // Intentar desde matches primero, luego desde array simple
-      const matches = ko.matches?.[round] || [];
-      if (matches.length) {
-        matches.forEach(m => { if (m.team1) s.add(m.team1); if (m.team2) s.add(m.team2); });
-      } else {
-        (ko[round] || []).forEach(t => t && s.add(t));
-      }
-    }
-    return s;
-  }
-
-  function predTeamsInRound(round) {
-    const s = new Set();
-    if (round === 'finalist') {
-      (predKo.finalists || []).forEach(t => t && s.add(t));
-    } else if (round === 'champion') {
-      if (predKo.champion) s.add(predKo.champion);
-    } else if (round === 'thirdPlace') {
-      if (predKo.thirdPlaceWinner) s.add(predKo.thirdPlaceWinner);
-    } else {
-      const matches = predKo.matches?.[round] || [];
-      if (matches.length) {
-        matches.forEach(m => { if (m.team1) s.add(m.team1); if (m.team2) s.add(m.team2); });
-      } else {
-        (predKo[round] || []).forEach(t => t && s.add(t));
-      }
-    }
-    return s;
-  }
-
-  ['round32','round16','quarterfinals','semifinals','finalist','champion','thirdPlace'].forEach(round => {
-    if (!eventIds.has(`ko_${round}`)) return;
-    const pts = round === 'finalist' ? PTS.eliminatorias.finalist
-              : round === 'champion' ? PTS.eliminatorias.champion
-              : round === 'thirdPlace' ? PTS.eliminatorias.thirdPlace
-              : PTS.eliminatorias[round] || 0;
-    const real = realTeamsInRound(round);
-    const pred = predTeamsInRound(round);
-    pred.forEach(t => { if (real.has(t)) score += pts; });
+  const predKO=prediction.knockout||{}, realKO=R.knockout||{};
+  ['round32','round16','quarterfinals','semifinals'].forEach(r=>{
+    if(!ids.has(`ko_${r}`)) return;
+    const realT=teamsInKORound(realKO,r,null,null);
+    const predT=teamsInKORound(predKO,r,prediction.groups,prediction.thirdPlace);
+    predT.forEach(t=>{if(realT.has(t))score+=PTS.eliminatorias[r];});
   });
 
-  // Premios
-  const awards = R.awards || {};
-  AWARDS_CONFIG.forEach(cfg => {
-    if (!eventIds.has(`award_${cfg.key}`)) return;
-    const real = awards[cfg.key];
-    const pred = prediction.awards?.[cfg.key];
-    if (real && pred && real === pred) score += cfg.points;
+  if(ids.has('ko_finalist')){
+    const rf=new Set(getFinalists(realKO)),pf=new Set(getFinalists(predKO));
+    pf.forEach(t=>{if(rf.has(t))score+=20;});
+  }
+  if(ids.has('ko_champion')){const rc=getChampion(realKO),pc=getChampion(predKO);if(rc&&pc&&rc===pc)score+=30;}
+  if(ids.has('ko_thirdPlace')){const rt=getThirdWinner(realKO),pt=getThirdWinner(predKO);if(rt&&pt&&rt===pt)score+=15;}
+
+  AWARDS_CONFIG.forEach(cfg=>{
+    if(!ids.has(`award_${cfg.key}`)) return;
+    const r=(R.awards||{})[cfg.key],p=(prediction.awards||{})[cfg.key];
+    if(r&&p&&r===p) score+=cfg.points;
   });
 
   return score;
 }
 
-// ── Calcular quién gana puntos en cada evento ──────────────────────────────────
-function buildEventWinners(submissions, results, events) {
-  return events.map((event, idx) => {
-    const winners = [];
-    submissions.forEach(s => {
-      const before = idx > 0 ? scoreUpTo(s.prediction, results, events, idx - 1) : 0;
-      const after  = scoreUpTo(s.prediction, results, events, idx);
-      if (after > before) winners.push({ name: s.name, gained: after - before });
-    });
-    return { event, winners };
-  });
+// ── CSV Parser ────────────────────────────────────────────────────────────────
+function parseCSV(csv) {
+  const rows=[];let row=[],value='',inQ=false;
+  for(let i=0;i<csv.length;i++){
+    const c=csv[i],n=csv[i+1];
+    if(c==='"'&&inQ&&n==='"'){value+='"';i++;}
+    else if(c==='"')inQ=!inQ;
+    else if(c===','&&!inQ){row.push(value);value='';}
+    else if((c==='\n'||c==='\r')&&!inQ){if(value||row.length){row.push(value);rows.push(row);}row=[];value='';if(c==='\r'&&n==='\n')i++;}
+    else value+=c;
+  }
+  if(value||row.length){row.push(value);rows.push(row);}
+  return rows;
 }
 
-// ── Gráfica ────────────────────────────────────────────────────────────────────
-let chartInstance = null;
-let hiddenSeries = new Set();
+// ── Gráfica ───────────────────────────────────────────────────────────────────
+let chartInstance=null, hiddenSeries=new Set();
 
 function renderChart(submissions, results, events) {
-  const ctx = document.getElementById('chart').getContext('2d');
-
-  const labels = ['Inicio', ...events.map(e => e.label)];
-
-  const datasets = submissions.map((s, i) => {
-    const color = COLORS[i % COLORS.length];
-    const data = [0, ...events.map((_, idx) => scoreUpTo(s.prediction, results, events, idx))];
-    return {
-      label: s.name,
-      data,
-      borderColor: color,
-      backgroundColor: color + '22',
-      pointBackgroundColor: color,
-      pointRadius: 5,
-      pointHoverRadius: 7,
-      borderWidth: 2.5,
-      tension: 0.3,
-      hidden: hiddenSeries.has(s.name),
-      fill: false,
-    };
+  const ctx=document.getElementById('chart').getContext('2d');
+  const labels=['Inicio',...events.map(e=>e.label)];
+  const datasets=submissions.map((s,i)=>{
+    const color=COLORS[i%COLORS.length];
+    return {label:s.name,data:[0,...events.map((_,idx)=>scoreUpTo(s.prediction,results,events,idx))],
+      borderColor:color,backgroundColor:color+'22',pointBackgroundColor:color,
+      pointRadius:5,pointHoverRadius:7,borderWidth:2.5,tension:0.3,hidden:hiddenSeries.has(s.name),fill:false};
   });
-
-  if (chartInstance) chartInstance.destroy();
-
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} pts`,
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#888', font: { size: 11 }, maxRotation: 35 },
-          grid: { color: '#1e1e1e' }
-        },
-        y: {
-          ticks: { color: '#888' },
-          grid: { color: '#1e1e1e' },
-          title: { display: true, text: 'Puntos', color: '#666' }
-        }
-      }
-    }
-  });
-
-  // Leyenda personalizada con toggle
-  const legendEl = document.getElementById('legend');
-  legendEl.innerHTML = '';
-  submissions.forEach((s, i) => {
-    const color = COLORS[i % COLORS.length];
-    const item = document.createElement('div');
-    item.className = 'legend-item' + (hiddenSeries.has(s.name) ? ' hidden' : '');
-    item.innerHTML = `<span class="legend-dot" style="background:${color}"></span><span>${s.name}</span>`;
-    item.addEventListener('click', () => {
-      if (hiddenSeries.has(s.name)) hiddenSeries.delete(s.name);
-      else hiddenSeries.add(s.name);
-      renderChart(submissions, results, events);
-    });
+  if(chartInstance) chartInstance.destroy();
+  chartInstance=new Chart(ctx,{type:'line',data:{labels,datasets},options:{
+    responsive:true,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} pts`}}},
+    scales:{x:{ticks:{color:'#888',font:{size:11},maxRotation:35},grid:{color:'#1e1e1e'}},
+            y:{ticks:{color:'#888'},grid:{color:'#1e1e1e'},title:{display:true,text:'Puntos',color:'#666'}}}
+  }});
+  const legendEl=document.getElementById('legend'); legendEl.innerHTML='';
+  submissions.forEach((s,i)=>{
+    const color=COLORS[i%COLORS.length];
+    const item=document.createElement('div'); item.className='legend-item'+(hiddenSeries.has(s.name)?' hidden':'');
+    item.innerHTML=`<span class="legend-dot" style="background:${color}"></span><span>${s.name}</span>`;
+    item.addEventListener('click',()=>{if(hiddenSeries.has(s.name))hiddenSeries.delete(s.name);else hiddenSeries.add(s.name);renderChart(submissions,results,events);});
     legendEl.appendChild(item);
   });
 }
 
-// ── Tabla de ranking actual ────────────────────────────────────────────────────
-function renderRankingTable(submissions, results, events) {
-  const ranked = submissions.map(s => ({
-    name: s.name,
-    score: events.length > 0 ? scoreUpTo(s.prediction, results, events, events.length - 1) : 0
-  })).sort((a, b) => b.score - a.score);
-
-  const table = document.createElement('table');
-  table.className = 'ranking-table';
-  table.innerHTML = `<thead><tr><th>#</th><th>Participante</th><th>Puntos</th></tr></thead><tbody></tbody>`;
-  const tbody = table.querySelector('tbody');
-
-  ranked.forEach((r, i) => {
-    const tr = document.createElement('tr');
-    tr.className = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
-    tr.innerHTML = `<td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td><td>${r.name}</td><td>${r.score} pts</td>`;
-    tbody.appendChild(tr);
+// ── Panel detalle jugador ─────────────────────────────────────────────────────
+function showPlayerDetail(submission, results) {
+  const panel=document.getElementById('playerDetail');
+  const title=document.getElementById('detailTitle');
+  const {lines,total}=scoreBreakdown(submission.prediction,results);
+  title.style.display='block'; title.textContent=`📊 ${submission.name} — ${total} pts`;
+  panel.classList.add('visible');
+  panel.innerHTML=`<button class="btn-close-detail" id="closeDetail">✕ Cerrar</button>`;
+  lines.forEach(line=>{
+    if(line.section){const d=document.createElement('div');d.className='detail-section';d.textContent=line.section;panel.appendChild(d);}
+    else{const d=document.createElement('div');d.className='detail-row';
+      d.innerHTML=`<span class="detail-label" style="${line.bold?'color:#ccc;font-weight:700':''}">${line.label}</span><span class="detail-pts ${line.pts===0?'zero':''}" style="${line.bold?'font-size:1rem':''}">+${line.pts}pt</span>`;
+      panel.appendChild(d);}
   });
-
-  const wrap = document.getElementById('rankingTable');
-  wrap.innerHTML = '';
-  wrap.appendChild(table);
+  const tr=document.createElement('div');tr.className='detail-row';tr.style.marginTop='12px';
+  tr.innerHTML=`<span class="detail-label" style="color:#FFD700;font-weight:900;font-size:1rem">TOTAL</span><span class="detail-pts" style="color:#FFD700;font-size:1.1rem;font-weight:900">+${total}pt</span>`;
+  panel.appendChild(tr);
+  document.getElementById('closeDetail').addEventListener('click',()=>{panel.classList.remove('visible');title.style.display='none';});
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-// ── Log de eventos ─────────────────────────────────────────────────────────────
+// ── Tabla de ranking ──────────────────────────────────────────────────────────
+function renderRankingTable(submissions, results) {
+  const ranked=submissions.map(s=>({name:s.name,score:scoreAll(s.prediction,results),submission:s})).sort((a,b)=>b.score-a.score);
+  const table=document.createElement('table'); table.className='ranking-table';
+  table.innerHTML=`<thead><tr><th>#</th><th>Participante (click para desglose)</th><th>Puntos</th></tr></thead><tbody></tbody>`;
+  const tbody=table.querySelector('tbody');
+  ranked.forEach((r,i)=>{
+    const tr=document.createElement('tr'); tr.className=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
+    tr.innerHTML=`<td>${medal}</td><td class="clickable">${r.name}</td><td>${r.score} pts</td>`;
+    tr.querySelector('td.clickable').addEventListener('click',()=>showPlayerDetail(r.submission,results));
+    tbody.appendChild(tr);
+  });
+  const wrap=document.getElementById('rankingTable'); wrap.innerHTML=''; wrap.appendChild(table);
+}
+
+// ── Log de eventos ────────────────────────────────────────────────────────────
+function buildEventWinners(submissions, results, events) {
+  return events.map((event,idx)=>{
+    const winners=[];
+    submissions.forEach(s=>{
+      const before=idx>0?scoreUpTo(s.prediction,results,events,idx-1):0;
+      const after=scoreUpTo(s.prediction,results,events,idx);
+      if(after>before) winners.push({name:s.name,gained:after-before});
+    });
+    return {event,winners};
+  });
+}
+
 function renderEventsLog(eventWinners) {
-  const el = document.getElementById('eventsLog');
-  el.innerHTML = '';
-
-  if (eventWinners.length === 0) {
-    el.innerHTML = '<p style="color:#666;text-align:center;padding:20px">Aún no hay eventos puntuables.</p>';
-    return;
-  }
-
-  [...eventWinners].reverse().forEach(({ event, winners }) => {
-    const item = document.createElement('div');
-    item.className = 'event-item';
-
-    const winnersHtml = winners.length
-      ? winners.map(w => `<span class="event-winner-tag">${w.name} <strong>+${w.gained}pt</strong></span>`).join('')
-      : '<span style="color:#555;font-size:0.8rem">Nadie suma puntos aquí</span>';
-
-    item.innerHTML = `
-      <span class="event-label">${event.label}</span>
-      <div class="event-winners">${winnersHtml}</div>
-    `;
+  const el=document.getElementById('eventsLog'); el.innerHTML='';
+  if(!eventWinners.length){el.innerHTML='<p style="color:#666;text-align:center;padding:20px">Aún no hay eventos puntuables.</p>';return;}
+  [...eventWinners].reverse().forEach(({event,winners})=>{
+    const item=document.createElement('div'); item.className='event-item';
+    const wHtml=winners.length?winners.sort((a,b)=>b.gained-a.gained).map(w=>`<span class="event-winner-tag">${w.name} <strong>+${w.gained}pt</strong></span>`).join(''):'<span style="color:#555;font-size:0.8rem">Nadie suma aquí</span>';
+    item.innerHTML=`<span class="event-label">${event.label}</span><div class="event-winners">${wHtml}</div>`;
     el.appendChild(item);
   });
 }
 
-// ── Controles de filtro de fase ────────────────────────────────────────────────
+// ── Controles ─────────────────────────────────────────────────────────────────
 function renderControls(events, submissions, results) {
-  const phases = [
-    { id: 'all',    label: 'Todo' },
-    { id: 'grupos', label: 'Grupos' },
-    { id: 'ko',     label: 'Eliminatorias' },
-    { id: 'awards', label: 'Premios' },
-  ];
-
-  const wrap = document.getElementById('controls');
-  wrap.innerHTML = '';
-  let activePhase = 'all';
-
-  phases.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'btn' + (p.id === 'all' ? ' active' : '');
-    btn.textContent = p.label;
-    btn.addEventListener('click', () => {
-      activePhase = p.id;
-      wrap.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const filtered = p.id === 'all' ? events
-        : p.id === 'grupos' ? events.filter(e => e.type === 'grupo' || e.type === 'terceros' || e.type === 'quiniela')
-        : p.id === 'ko'     ? events.filter(e => e.type === 'knockout')
-        : events.filter(e => e.type === 'award');
-
-      const eventWinners = buildEventWinners(submissions, results, filtered);
-      renderChart(submissions, results, filtered);
-      renderEventsLog(eventWinners);
+  const phases=[{id:'all',label:'Todo'},{id:'grupos',label:'Grupos'},{id:'ko',label:'Eliminatorias'},{id:'awards',label:'Premios'}];
+  const wrap=document.getElementById('controls'); wrap.innerHTML='';
+  phases.forEach(p=>{
+    const btn=document.createElement('button'); btn.className='btn'+(p.id==='all'?' active':''); btn.textContent=p.label;
+    btn.addEventListener('click',()=>{
+      wrap.querySelectorAll('.btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const f=p.id==='all'?events:p.id==='grupos'?events.filter(e=>['grupo','terceros','quiniela'].includes(e.type)):p.id==='ko'?events.filter(e=>e.type==='knockout'):events.filter(e=>e.type==='award');
+      renderChart(submissions,results,f); renderEventsLog(buildEventWinners(submissions,results,f));
     });
     wrap.appendChild(btn);
   });
-
-  // Botón mostrar/ocultar todos
-  const btnAll = document.createElement('button');
-  btnAll.className = 'btn';
-  btnAll.textContent = 'Mostrar todos';
-  btnAll.addEventListener('click', () => {
-    hiddenSeries.clear();
-    renderChart(submissions, results, events);
-  });
-  wrap.appendChild(btnAll);
+  const btnShow=document.createElement('button'); btnShow.className='btn'; btnShow.textContent='Mostrar todos';
+  btnShow.addEventListener('click',()=>{hiddenSeries.clear();renderChart(submissions,results,events);});
+  wrap.appendChild(btnShow);
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   try {
-    const res = await fetch(LEADERBOARD_CSV_URL);
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-
-    const submissions = [];
-    rows.slice(1).forEach(row => {
-      const rawJson = row[1];
-      if (!rawJson) return;
-      try {
-        const prediction = JSON.parse(rawJson);
-        submissions.push({ name: prediction.name || 'Anónimo', prediction });
-      } catch (e) {}
-    });
-
-    if (submissions.length === 0) {
-      document.getElementById('loading').textContent = 'No hay apuestas en el Google Sheets.';
-      return;
-    }
-
-    document.getElementById('loading').style.display = 'none';
-
-    const results = typeof RESULTS !== 'undefined' ? RESULTS : {};
-    const events = buildEvents(results);
-    const eventWinners = buildEventWinners(submissions, results, events);
-
-    renderControls(events, submissions, results);
-    renderChart(submissions, results, events);
-    renderRankingTable(submissions, results, events);
-    renderEventsLog(eventWinners);
-
-  } catch (e) {
-    document.getElementById('loading').textContent = 'Error al cargar los datos: ' + e.message;
-    console.error(e);
-  }
+    const res=await fetch(LEADERBOARD_CSV_URL);
+    const csv=await res.text();
+    const rows=parseCSV(csv);
+    const submissions=[];
+    rows.slice(1).forEach(row=>{const raw=row[1];if(!raw)return;try{const p=JSON.parse(raw);submissions.push({name:p.name||'Anónimo',prediction:p});}catch(e){}});
+    if(!submissions.length){document.getElementById('loading').textContent='No hay apuestas.';return;}
+    document.getElementById('loading').style.display='none';
+    const results=typeof RESULTS!=='undefined'?RESULTS:{};
+    const events=buildEvents(results);
+    renderControls(events,submissions,results);
+    renderChart(submissions,results,events);
+    renderRankingTable(submissions,results);
+    renderEventsLog(buildEventWinners(submissions,results,events));
+  } catch(e){document.getElementById('loading').textContent='Error: '+e.message;console.error(e);}
 }
 
 main();
