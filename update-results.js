@@ -1,5 +1,5 @@
 /**
- * update-results.js — v4
+ * update-results.js
  * Consulta football-data.org y genera results.js para la porra del Mundial 2026.
  */
 
@@ -13,67 +13,24 @@ const OUT_FILE    = path.join(__dirname, 'results.js');
 
 if (!API_KEY) { console.error('❌  Falta FOOTBALL_API_KEY'); process.exit(1); }
 
-// ─── Mapeo inglés → español ───────────────────────────────────────────────────
 const TEAM_ES = {
-  'Algeria':                      'Argelia',
-  'Argentina':                    'Argentina',
-  'Australia':                    'Australia',
-  'Austria':                      'Austria',
-  'Belgium':                      'Bélgica',
-  'Bosnia & Herzegovina':         'Bosnia y Herzegovina',
-  'Bosnia-Herzegovina':           'Bosnia y Herzegovina',
-  'Bosnia and Herzegovina':       'Bosnia y Herzegovina',
-  'Brazil':                       'Brasil',
-  'Canada':                       'Canadá',
-  'Cape Verde':                   'Cabo Verde',
-  'Cape Verde Islands':           'Cabo Verde',
-  'Colombia':                     'Colombia',
-  'Croatia':                      'Croacia',
-  'Curaçao':                      'Curazao',
-  'Curacao':                      'Curazao',
-  'Czech Republic':               'República Checa',
-  'Czechia':                      'República Checa',
-  'DR Congo':                     'RD del Congo',
-  'Congo DR':                     'RD del Congo',
-  'Democratic Republic of Congo': 'RD del Congo',
-  'Ecuador':                      'Ecuador',
-  'Egypt':                        'Egipto',
-  'England':                      'Inglaterra',
-  'France':                       'Francia',
-  'Germany':                      'Alemania',
-  'Ghana':                        'Ghana',
-  'Haiti':                        'Haití',
-  'Iran':                         'Irán',
-  'Iraq':                         'Irak',
-  'Ivory Coast':                  'Costa de Marfil',
-  "Côte d'Ivoire":                'Costa de Marfil',
-  'Japan':                        'Japón',
-  'Jordan':                       'Jordania',
-  'Mexico':                       'México',
-  'Morocco':                      'Marruecos',
-  'Netherlands':                  'Países Bajos',
-  'New Zealand':                  'Nueva Zelanda',
-  'Norway':                       'Noruega',
-  'Panama':                       'Panamá',
-  'Paraguay':                     'Paraguay',
-  'Portugal':                     'Portugal',
-  'Qatar':                        'Catar',
-  'Saudi Arabia':                 'Arabia Saudí',
-  'Scotland':                     'Escocia',
-  'Senegal':                      'Senegal',
-  'South Africa':                 'Sudáfrica',
-  'South Korea':                  'Corea del Sur',
-  'Korea Republic':               'Corea del Sur',
-  'Spain':                        'España',
-  'Sweden':                       'Suecia',
-  'Switzerland':                  'Suiza',
-  'Tunisia':                      'Túnez',
-  'Turkey':                       'Turquía',
-  'Türkiye':                      'Turquía',
-  'USA':                          'Estados Unidos',
-  'United States':                'Estados Unidos',
-  'Uruguay':                      'Uruguay',
-  'Uzbekistan':                   'Uzbekistán',
+  'Algeria':'Argelia','Argentina':'Argentina','Australia':'Australia','Austria':'Austria',
+  'Belgium':'Bélgica','Bosnia & Herzegovina':'Bosnia y Herzegovina','Bosnia-Herzegovina':'Bosnia y Herzegovina',
+  'Bosnia and Herzegovina':'Bosnia y Herzegovina','Brazil':'Brasil','Canada':'Canadá',
+  'Cape Verde':'Cabo Verde','Cape Verde Islands':'Cabo Verde','Colombia':'Colombia',
+  'Croatia':'Croacia','Curaçao':'Curazao','Curacao':'Curazao','Czech Republic':'República Checa',
+  'Czechia':'República Checa','DR Congo':'RD del Congo','Congo DR':'RD del Congo',
+  'Democratic Republic of Congo':'RD del Congo','Ecuador':'Ecuador','Egypt':'Egipto',
+  'England':'Inglaterra','France':'Francia','Germany':'Alemania','Ghana':'Ghana',
+  'Haiti':'Haití','Iran':'Irán','Iraq':'Irak','Ivory Coast':'Costa de Marfil',
+  "Côte d'Ivoire":'Costa de Marfil','Japan':'Japón','Jordan':'Jordania','Mexico':'México',
+  'Morocco':'Marruecos','Netherlands':'Países Bajos','New Zealand':'Nueva Zelanda',
+  'Norway':'Noruega','Panama':'Panamá','Paraguay':'Paraguay','Portugal':'Portugal',
+  'Qatar':'Catar','Saudi Arabia':'Arabia Saudí','Scotland':'Escocia','Senegal':'Senegal',
+  'South Africa':'Sudáfrica','South Korea':'Corea del Sur','Korea Republic':'Corea del Sur',
+  'Spain':'España','Sweden':'Suecia','Switzerland':'Suiza','Tunisia':'Túnez',
+  'Turkey':'Turquía','Türkiye':'Turquía','USA':'Estados Unidos','United States':'Estados Unidos',
+  'Uruguay':'Uruguay','Uzbekistan':'Uzbekistán',
 };
 
 function es(name) { return TEAM_ES[name] || name || ''; }
@@ -89,21 +46,11 @@ function groupLetter(raw) {
   return '';
 }
 
-// ─── Quiniela 1X2 ─────────────────────────────────────────────────────────────
-// CRÍTICO: team1 y team2 deben coincidir EXACTAMENTE con los de app.js:
-//   { team1: 'México',  team2: 'Corea del Sur' }  → "1"=gana México,  "2"=gana Corea
-//   { team1: 'Escocia', team2: 'Marruecos'     }  → "1"=gana Escocia, "2"=gana Marruecos
-//   { team1: 'Uruguay', team2: 'España'         }  → "1"=gana Uruguay, "2"=gana España
-// La clave se genera igual que en app.js: [team1,team2].sort().join('__')
 const QUINIELA_MATCHES = [
   { team1: 'México',   team2: 'Corea del Sur' },
   { team1: 'Escocia',  team2: 'Marruecos'     },
   { team1: 'Uruguay',  team2: 'España'         },
-].map(m => ({
-  ...m,
-  key:   [m.team1, m.team2].sort().join('__'),
-  teams: new Set([m.team1, m.team2]),
-}));
+].map(m => ({ ...m, key: [m.team1, m.team2].sort().join('__'), teams: new Set([m.team1, m.team2]) }));
 
 function apiGet(endpoint) {
   return new Promise((resolve, reject) => {
@@ -130,7 +77,7 @@ async function main() {
 
   const allMatches = matchesData.matches || [];
 
-  // ── Contar partidos finalizados por grupo ──────────────────────────────────
+  // ── Grupos ────────────────────────────────────────────────────────────────
   const finishedByGroup = {};
   const totalByGroup    = {};
   for (const match of allMatches) {
@@ -141,22 +88,16 @@ async function main() {
     if (match.status === 'FINISHED')
       finishedByGroup[letter] = (finishedByGroup[letter] || 0) + 1;
   }
-  console.log('  Partidos finalizados por grupo:', JSON.stringify(finishedByGroup));
-  console.log('  Total partidos por grupo:',       JSON.stringify(totalByGroup));
 
-  // ── Standings: solo grupos con TODOS los partidos jugados ─────────────────
   const groupStandings = {};
   for (const standing of standingsData.standings || []) {
     if (standing.type !== 'TOTAL') continue;
     const letter = groupLetter(standing.group);
-    if (!letter) {
-      console.log(`  ⚠️  Letra de grupo no reconocida: "${standing.group}"`);
-      continue;
-    }
+    if (!letter) continue;
     const total    = totalByGroup[letter]    || 6;
     const finished = finishedByGroup[letter] || 0;
     if (finished < total) {
-      console.log(`  Grupo ${letter}: ${finished}/${total} — pendiente, se omite`);
+      console.log(`  Grupo ${letter}: ${finished}/${total} jugados — pendiente`);
       continue;
     }
     groupStandings[letter] = standing.table.map(row => es(row.team.name));
@@ -164,33 +105,22 @@ async function main() {
   }
 
   // ── Quiniela 1X2 ──────────────────────────────────────────────────────────
-  // "1" = gana team1 (según app.js), "2" = gana team2, "X" = empate
   const quiniela1x2 = Object.fromEntries(QUINIELA_MATCHES.map(m => [m.key, '']));
-
   for (const match of allMatches) {
     if (match.stage !== 'GROUP_STAGE' || match.status !== 'FINISHED') continue;
-
     const home = es(match.homeTeam?.name);
     const away = es(match.awayTeam?.name);
-
     const qm = QUINIELA_MATCHES.find(m => m.teams.has(home) && m.teams.has(away));
     if (!qm) continue;
-
     const hg = match.score?.fullTime?.home ?? 0;
     const ag = match.score?.fullTime?.away ?? 0;
-
-    let result;
     if (hg === ag) {
-      result = 'X';
+      quiniela1x2[qm.key] = 'X';
     } else {
-      // Quién ganó el partido
       const winner = hg > ag ? home : away;
-      // "1" si ganó team1 (según la definición de app.js), "2" si ganó team2
-      result = winner === qm.team1 ? '1' : '2';
+      quiniela1x2[qm.key] = winner === qm.team1 ? '1' : '2';
     }
-
-    quiniela1x2[qm.key] = result;
-    console.log(`  Quiniela [${qm.key}]: ${home} ${hg}-${ag} ${away} → "${result}" (team1=${qm.team1}, team2=${qm.team2})`);
+    console.log(`  Quiniela [${qm.key}]: ${home} ${hg}-${ag} ${away} → "${quiniela1x2[qm.key]}"`);
   }
 
   // ── Eliminatorias ─────────────────────────────────────────────────────────
@@ -205,32 +135,51 @@ async function main() {
     'FINAL':          'final',
   };
 
-  const knockoutRounds = { round32:[], round16:[], quarterfinals:[], semifinals:[] };
+  // koMatches: solo partidos TERMINADOS, con team1/team2/winner (no home/away)
   const koMatches = { round32:[], round16:[], quarterfinals:[], semifinals:[], thirdPlace:[], final:[] };
+  // koParticipants: todos los partidos KO (terminados o no), para saber quién participa en cada ronda
+  const koParticipants = { round32:[], round16:[], quarterfinals:[], semifinals:[], thirdPlace:[], final:[] };
+
   let champion = '', runnerUp = '', thirdPlaceWinner = '';
 
   for (const match of allMatches) {
     const roundKey = STAGE_MAP[match.stage];
-    if (!roundKey || match.status !== 'FINISHED') continue;
+    if (!roundKey) continue;
 
-    const home   = es(match.homeTeam?.name);
-    const away   = es(match.awayTeam?.name);
-    const winner = match.score?.winner === 'HOME_TEAM' ? home
-                 : match.score?.winner === 'AWAY_TEAM' ? away : '';
-    const entry = { match: match.id, home, away, winner };
+    const team1  = es(match.homeTeam?.name);
+    const team2  = es(match.awayTeam?.name);
+
+    // Todos los partidos KO (para saber quién llega a cada ronda)
+    if (team1 || team2) {
+      koParticipants[roundKey].push({ match: match.id, team1, team2 });
+    }
+
+    // Solo los terminados para saber el ganador
+    if (match.status !== 'FINISHED') continue;
+    const winner = match.score?.winner === 'HOME_TEAM' ? team1
+                 : match.score?.winner === 'AWAY_TEAM' ? team2 : '';
+
+    const entry = { match: match.id, team1, team2, winner };
 
     if (roundKey === 'final') {
       koMatches.final.push(entry);
-      champion = winner;
-      runnerUp = winner === home ? away : home;
+      champion  = winner;
+      runnerUp  = winner === team1 ? team2 : team1;
     } else if (roundKey === 'thirdPlace') {
       koMatches.thirdPlace.push(entry);
       thirdPlaceWinner = winner;
     } else {
       koMatches[roundKey].push(entry);
-      if (winner) knockoutRounds[roundKey].push(winner);
     }
   }
+
+  // Array simple de ganadores por ronda (los que PASAN a la siguiente)
+  // round32 winners → los que juegan en round16
+  // etc.
+  const round32winners = koMatches.round32.map(m => m.winner).filter(Boolean);
+  const round16winners = koMatches.round16.map(m => m.winner).filter(Boolean);
+  const qfWinners      = koMatches.quarterfinals.map(m => m.winner).filter(Boolean);
+  const sfWinners      = koMatches.semifinals.map(m => m.winner).filter(Boolean);
 
   const semifinalists = allMatches
     .filter(m => m.stage === 'SEMI_FINALS')
@@ -238,36 +187,52 @@ async function main() {
     .filter(Boolean);
   const finalists = champion && runnerUp ? [champion, runnerUp] : [];
 
-  // ── Mejores terceros (solo de grupos cerrados) ────────────────────────────
+  // ── Mejores terceros ──────────────────────────────────────────────────────
   const thirdTeams = [];
   for (const standing of standingsData.standings || []) {
     if (standing.type !== 'TOTAL') continue;
     const letter = groupLetter(standing.group);
     if (!groupStandings[letter]) continue;
     const row = standing.table.find(r => r.position === 3);
-    if (row) thirdTeams.push({
-      name:   es(row.team.name),
-      points: row.points,
-      gd:     row.goalDifference,
-      gf:     row.goalsFor,
-    });
+    if (row) thirdTeams.push({ name: es(row.team.name), points: row.points, gd: row.goalDifference, gf: row.goalsFor });
   }
   thirdTeams.sort((a,b) => b.points-a.points || b.gd-a.gd || b.gf-a.gf);
   const thirdPlace = thirdTeams.slice(0,8).map(t => t.name);
 
-  // ── Construir y escribir RESULTS ──────────────────────────────────────────
+  // ── Construir RESULTS ─────────────────────────────────────────────────────
   const RESULTS = {
     groups: groupStandings,
     thirdPlace,
     quiniela1x2,
     knockout: {
-      ...knockoutRounds,
-      champion, runnerUp, finalists, thirdPlaceWinner,
-      final: champion, thirdPlace: thirdPlaceWinner,
+      // Arrays simples de GANADORES por ronda (los que avanzan)
+      round32:       round32winners,   // ganadores de R32 = participantes en R16
+      round16:       round16winners,   // ganadores de R16 = participantes en QF
+      quarterfinals: qfWinners,
+      semifinals:    sfWinners,
+      champion,
+      runnerUp,
+      finalists,
+      thirdPlaceWinner,
+      final:         champion,
+      thirdPlace:    thirdPlaceWinner,
+      // Participantes en cada ronda (team1+team2, terminados o no)
+      participants: {
+        round32:       koParticipants.round32,
+        round16:       koParticipants.round16,
+        quarterfinals: koParticipants.quarterfinals,
+        semifinals:    koParticipants.semifinals,
+        thirdPlace:    koParticipants.thirdPlace,
+        final:         koParticipants.final,
+      },
+      // Matches terminados con team1/team2/winner
       matches: koMatches,
     },
-    semifinalists, finalists,
-    champion, runnerUp, thirdPlaceWinner,
+    semifinalists,
+    finalists,
+    champion,
+    runnerUp,
+    thirdPlaceWinner,
     awards: { topScorer:'', topAssister:'', goldenGlove:'', topScoringTeam:'', mostConcededTeam:'' },
   };
 
@@ -282,9 +247,11 @@ const RESULTS = ${JSON.stringify(RESULTS, null, 2)};
 `, 'utf8');
 
   console.log(`\n✅  results.js actualizado (${now})`);
-  console.log(`   Grupos cerrados: ${Object.keys(groupStandings).length}/12`);
-  console.log(`   Quiniela 1X2:    ${JSON.stringify(quiniela1x2)}`);
-  console.log(`   Campeón:         ${champion || '(pendiente)'}`);
+  console.log(`   Grupos cerrados:    ${Object.keys(groupStandings).length}/12`);
+  console.log(`   Quiniela 1X2:       ${Object.values(quiniela1x2).filter(v=>v).length}/3`);
+  console.log(`   R32 jugados:        ${koMatches.round32.length}/16`);
+  console.log(`   R16 jugados:        ${koMatches.round16.length}/8`);
+  console.log(`   Campeón:            ${champion || '(pendiente)'}`);
 }
 
 main().catch(err => { console.error('❌', err.message); process.exit(1); });
