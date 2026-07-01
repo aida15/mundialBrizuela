@@ -3543,59 +3543,63 @@ function getKnockoutStageTeamSets(payload) {
   }
 
   // Lógica de puntuación KO:
-  // - round32: equipos que PARTICIPAN en dieciseisavos (team1+team2 de sus partidos).
-  //   Para RESULTS: viene en knockout.participants.round32 (todos los partidos) o se
-  //   deduce de knockout.matches.round32 (team1+team2). Si no hay datos KO aún,
-  //   se usan los clasificados de grupos (todos los 1º, 2º y 8 mejores terceros).
-  // - round16+: equipos que PARTICIPAN en esa ronda = ganadores de la ronda anterior.
-  //   Para RESULTS: knockout.participants.roundX o team1+team2 de matches de esa ronda.
-  //   Para el payload de un participante: team1+team2 de sus matches apostados.
-  // - finalist, champion, thirdPlace: el resultado concreto final.
+  // - round32: los 32 que llegan a dieciseisavos = 1º y 2º de cada grupo + 8 mejores terceros.
+  //   Siempre se calcula desde los grupos, tanto para RESULTS como para apuestas.
+  // - round16+: los que participan en esa ronda = ganadores de la ronda anterior.
+  //   Se lee del array simple ko.roundX (ganadores), o de los winners de ko.matches.prevRound.
+  //   Para apuestas: team1+team2 de ko.matches.round (los cruces que apostaron).
 
-  function teamsFromParticipants(ko, round) {
+  function koTeamsInRound(ko, round, groups, thirdPlace) {
     const s = new Set();
-    // Nuevo formato: knockout.participants.round
-    const parts = (ko.participants || {})[round] || [];
-    if (parts.length) {
-      parts.forEach(m => { if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2); });
+
+    if (round === 'round32') {
+      // Los 32 participantes = clasificados de grupos
+      if (groups) {
+        Object.values(groups).forEach(g => { if(g[0]) s.add(g[0]); if(g[1]) s.add(g[1]); });
+        (thirdPlace || []).slice(0, 8).forEach(t => t && s.add(t));
+      }
+      // Fallback si no hay grupos: matches
+      if (s.size === 0) {
+        ((ko.matches || {}).round32 || []).forEach(m => {
+          if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2);
+          if(m.home)  s.add(m.home);  if(m.away)  s.add(m.away);
+        });
+      }
       return s;
     }
-    // Formato legacy o apuesta: team1+team2 de knockout.matches.round
-    const matches = (ko.matches || {})[round] || [];
-    matches.forEach(m => { if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2); });
+
+    // round16, quarterfinals, semifinals:
+    const prevRound = { round16:'round32', quarterfinals:'round16', semifinals:'quarterfinals' }[round];
+
+    // A: array simple de ganadores de la ronda anterior (RESULTS y apuestas legacy)
+    const prevWinners = (ko[prevRound] || []).filter(Boolean);
+    if (prevWinners.length) { prevWinners.forEach(t => s.add(t)); return s; }
+
+    // B: winners de matches de la ronda anterior (RESULTS con matches terminados)
+    ((ko.matches || {})[prevRound] || []).forEach(m => { if(m.winner) s.add(m.winner); });
+    if (s.size) return s;
+
+    // C: team1+team2 de matches de esta ronda (apuestas con formato matches)
+    ((ko.matches || {})[round] || []).forEach(m => {
+      if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2);
+      if(m.home)  s.add(m.home);  if(m.away)  s.add(m.away);
+    });
     return s;
   }
 
   const ko = payload.knockout || {};
-
-  // round32: participantes en dieciseisavos
-  const round32 = teamsFromParticipants(ko, 'round32');
-  // Si no hay datos KO (grupos recién cerrados), los 32 clasificados de grupos
-  if (round32.size === 0 && payload.groups) {
-    Object.values(payload.groups).forEach(g => {
-      if (g[0]) round32.add(g[0]);
-      if (g[1]) round32.add(g[1]);
-    });
-    // + 8 mejores terceros
-    (payload.thirdPlace || []).slice(0, 8).forEach(t => t && round32.add(t));
-  }
-
-  const round16      = teamsFromParticipants(ko, 'round16');
-  const quarterfinals = teamsFromParticipants(ko, 'quarterfinals');
-  const semifinals   = teamsFromParticipants(ko, 'semifinals');
-
-  const finalists = new Set(uniqueTeamList(getFinalistsFromPayload(payload)));
-  const champion  = getChampionFromPayload(payload);
+  const finalists  = new Set(uniqueTeamList(getFinalistsFromPayload(payload)));
+  const champion   = getChampionFromPayload(payload);
   const thirdWinner = getThirdPlaceWinnerFromPayload(payload);
 
   return {
-    round32,
-    round16,
-    quarterfinals,
-    semifinals,
-    finalist:   finalists,
-    champion:   new Set(champion   ? [champion]   : []),
-    thirdPlace: new Set(thirdWinner ? [thirdWinner] : [])
+    round32:       koTeamsInRound(ko, 'round32',       payload.groups, payload.thirdPlace),
+    round16:       koTeamsInRound(ko, 'round16',       null, null),
+    quarterfinals: koTeamsInRound(ko, 'quarterfinals', null, null),
+    semifinals:    koTeamsInRound(ko, 'semifinals',    null, null),
+    finalist:      finalists,
+    champion:      new Set(champion    ? [champion]    : []),
+    thirdPlace:    new Set(thirdWinner ? [thirdWinner] : [])
   };
 }
 
