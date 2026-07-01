@@ -22,7 +22,7 @@ const puntuaciones = {
       primero: 4,
       segundo: 3,
       tercero: 2,
-      cuarto: 0
+      cuarto: 1
     },
     mejorTercero: 1
   },
