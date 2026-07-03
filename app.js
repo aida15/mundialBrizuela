@@ -3838,6 +3838,53 @@ function closePredictionModal() {
 }
 
 
+function hasAnyRealKnockoutMatch() {
+  const ko = RESULTS?.knockout || {};
+  const matches = ko.matches || {};
+  const rounds = ['round32','round16','quarterfinals','semifinals','thirdPlace','final'];
+
+  if (rounds.some(round => Array.isArray(matches[round]) && matches[round].some(m => m && (m.team1 || m.team2 || m.winner)))) {
+    return true;
+  }
+
+  const winnerRounds = ['round32','round16','quarterfinals','semifinals'];
+  if (winnerRounds.some(round => Array.isArray(ko[round]) && ko[round].some(Boolean))) return true;
+  if (ko.final || ko.champion || RESULTS?.champion) return true;
+  if (ko.thirdPlace || ko.thirdPlaceWinner || RESULTS?.thirdPlaceWinner) return true;
+
+  return false;
+}
+
+function openRealBracketModal() {
+  const modal = document.getElementById('predictionModal');
+  const viewer = document.getElementById('predictionViewer');
+
+  modal.style.display = 'flex';
+  viewer.innerHTML = `
+    <div class="real-bracket-view">
+      <h3>🥊 Cuadro real del Mundial 2026</h3>
+      <p class="note-text">Así va el bracket oficial según los resultados ya confirmados. Lo que aún no se ha jugado aparecerá vacío.</p>
+      <div class="real-bracket-container" id="realBracketContainer"></div>
+    </div>
+  `;
+
+  const container = viewer.querySelector('#realBracketContainer');
+
+  if (!hasAnyRealKnockoutMatch()) {
+    container.innerHTML = '<p class="note-text real-bracket-empty">Todavía no hay ningún partido de eliminatorias jugado. Vuelve cuando empiecen los dieciseisavos.</p>';
+    return;
+  }
+
+  const realState = buildKnockoutReviewState(RESULTS);
+  const pane = document.createElement('div');
+  pane.className = 'bracket-wrapper review-knockout-pane';
+  const bracket = renderKnockoutBracket(realState, '', {
+    extraClass: 'review-knockout-real'
+  });
+  pane.appendChild(bracket);
+  container.appendChild(pane);
+}
+
 function openScoringHelpModal() {
   const modal = document.getElementById('predictionModal');
   const viewer = document.getElementById('predictionViewer');
@@ -5139,6 +5186,10 @@ async function init() {
   const btnScoringHelp = document.getElementById('btnScoringHelp');
   if (btnScoringHelp) {
     btnScoringHelp.addEventListener('click', openScoringHelpModal);
+  }
+  const btnRealBracket = document.getElementById('btnRealBracket');
+  if (btnRealBracket) {
+    btnRealBracket.addEventListener('click', openRealBracketModal);
   }
   const btnPrizes = document.getElementById('btnPrizes');
   if (btnPrizes) {
