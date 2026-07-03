@@ -22,7 +22,7 @@ const puntuaciones = {
       primero: 4,
       segundo: 3,
       tercero: 2,
-      cuarto: 1
+      cuarto: 0
     },
     mejorTercero: 1
   },
@@ -4322,11 +4322,12 @@ function buildKnockoutReviewState(source) {
     const matchNum = Number(item.match);
     if (!Number.isFinite(matchNum)) return;
 
-    if (item.team1 || item.team2) {
-      state.matchTeams[matchNum] = {
-        team1: item.team1 || null,
-        team2: item.team2 || null
-      };
+    // Soportar tanto team1/team2 (apuestas) como home/away (results.js generado por API)
+    const t1 = item.team1 || item.home || null;
+    const t2 = item.team2 || item.away || null;
+
+    if (t1 || t2) {
+      state.matchTeams[matchNum] = { team1: t1, team2: t2 };
     }
 
     if (item.winner) {
@@ -4346,13 +4347,49 @@ function buildKnockoutReviewState(source) {
   function applyRound(roundName, treeRound) {
     const explicitMatches = knockout.matches?.[roundName];
 
-    // New payload format: use the official match number as source of truth.
-    // This is important for the leaderboard review because the real bracket may
-    // not be reproducible from the predicted group path. If results.js says
-    // match 101 is Portugal vs Norway, the popup/bracket for match 101 must show
-    // exactly that, regardless of what the computed bracket path would produce.
-    if (Array.isArray(explicitMatches)) {
-      explicitMatches.forEach(setExplicitMatch);
+    if (Array.isArray(explicitMatches) && explicitMatches.length > 0) {
+      // Comprobar si algún match ID coincide con el KO_TREE
+      const treeNums = new Set((treeRound || []).map(m => m.num));
+      const hasTreeIds = explicitMatches.some(m => treeNums.has(Number(m.match)));
+
+      if (hasTreeIds) {
+        // Formato con IDs del KO_TREE (apuestas de participantes)
+        explicitMatches.forEach(setExplicitMatch);
+        return;
+      }
+
+      // IDs son de la API (results.js generado automáticamente) — no coinciden con KO_TREE.
+      // Usamos home/away/winner para inferir los equipos en los slots del bracket.
+      explicitMatches.forEach(item => {
+        const t1 = item.team1 || item.home || null;
+        const t2 = item.team2 || item.away || null;
+        const winner = item.winner || null;
+
+        if (!winner && !t1 && !t2) return;
+
+        // Buscar el slot del bracket que tenga uno de estos equipos
+        const match = treeRound.find(m => {
+          const mt = state.matchTeams[m.num] || {};
+          return (t1 && (mt.team1 === t1 || mt.team2 === t1)) ||
+                 (t2 && (mt.team1 === t2 || mt.team2 === t2));
+        });
+
+        if (match) {
+          if (t1 || t2) {
+            state.matchTeams[match.num] = state.matchTeams[match.num] || {};
+            if (t1) state.matchTeams[match.num].team1 = state.matchTeams[match.num].team1 || t1;
+            if (t2) state.matchTeams[match.num].team2 = state.matchTeams[match.num].team2 || t2;
+          }
+          if (winner) setWinnerIfPossible(match, winner);
+        } else if (winner) {
+          // Si no encontramos el slot por equipo, aplicar el winner por nombre
+          const matchByWinner = treeRound.find(m => {
+            const mt = state.matchTeams[m.num] || {};
+            return mt.team1 === winner || mt.team2 === winner;
+          });
+          setWinnerIfPossible(matchByWinner, winner);
+        }
+      });
       return;
     }
 
@@ -5240,3 +5277,4 @@ document.addEventListener('keydown', e => {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+	
