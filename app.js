@@ -4221,7 +4221,7 @@ function openReadOnlyGroupResultsModal(entry, group) {
 
 positionPointsDiv.innerHTML = predOrder.map((team, idx) => {
   const points = getPredictedGroupPositionPoints(team, idx, realOrder);
-  const resolved = realOrder && realOrder[idx] !== undefined && realOrder[idx] !== null;
+  const resolved = Array.isArray(realOrder) && realOrder.length >= 4;
   return `<div class="review-standing-points-row">${renderReviewPointsBadge(points, 'Puntos por esta posición', resolved)}</div>`;
 }).join('');
 
@@ -5133,4 +5133,3 @@ document.addEventListener('keydown', e => {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-	
