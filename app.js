@@ -3542,64 +3542,21 @@ function getKnockoutStageTeamSets(payload) {
     };
   }
 
-  // Lógica de puntuación KO:
-  // - round32: los 32 que llegan a dieciseisavos = 1º y 2º de cada grupo + 8 mejores terceros.
-  //   Siempre se calcula desde los grupos, tanto para RESULTS como para apuestas.
-  // - round16+: los que participan en esa ronda = ganadores de la ronda anterior.
-  //   Se lee del array simple ko.roundX (ganadores), o de los winners de ko.matches.prevRound.
-  //   Para apuestas: team1+team2 de ko.matches.round (los cruces que apostaron).
-
-  function koTeamsInRound(ko, round, groups, thirdPlace) {
-    const s = new Set();
-
-    if (round === 'round32') {
-      // Los 32 participantes = clasificados de grupos
-      if (groups) {
-        Object.values(groups).forEach(g => { if(g[0]) s.add(g[0]); if(g[1]) s.add(g[1]); });
-        (thirdPlace || []).slice(0, 8).forEach(t => t && s.add(t));
-      }
-      // Fallback si no hay grupos: matches
-      if (s.size === 0) {
-        ((ko.matches || {}).round32 || []).forEach(m => {
-          if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2);
-          if(m.home)  s.add(m.home);  if(m.away)  s.add(m.away);
-        });
-      }
-      return s;
-    }
-
-    // round16, quarterfinals, semifinals:
-    const prevRound = { round16:'round32', quarterfinals:'round16', semifinals:'quarterfinals' }[round];
-
-    // A: array simple de ganadores de la ronda anterior (RESULTS y apuestas legacy)
-    const prevWinners = (ko[prevRound] || []).filter(Boolean);
-    if (prevWinners.length) { prevWinners.forEach(t => s.add(t)); return s; }
-
-    // B: winners de matches de la ronda anterior (RESULTS con matches terminados)
-    ((ko.matches || {})[prevRound] || []).forEach(m => { if(m.winner) s.add(m.winner); });
-    if (s.size) return s;
-
-    // C: team1+team2 de matches de esta ronda (apuestas con formato matches)
-    ((ko.matches || {})[round] || []).forEach(m => {
-      if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2);
-      if(m.home)  s.add(m.home);  if(m.away)  s.add(m.away);
-    });
-    return s;
-  }
-
-  const ko = payload.knockout || {};
-  const finalists  = new Set(uniqueTeamList(getFinalistsFromPayload(payload)));
-  const champion   = getChampionFromPayload(payload);
-  const thirdWinner = getThirdPlaceWinnerFromPayload(payload);
+  const reviewState = buildKnockoutReviewState(payload);
+  const finalNum = KO_TREE.final?.[0]?.num;
+  const thirdNum = KO_TREE.thirdPlace?.[0]?.num;
+  const finalMatch = finalNum ? (reviewState.matchTeams?.[finalNum] || {}) : {};
+  const thirdWinner = thirdNum ? reviewState.knockoutResults?.[thirdNum] : getThirdPlaceWinnerFromPayload(payload);
+  const champion = finalNum ? reviewState.knockoutResults?.[finalNum] : getChampionFromPayload(payload);
 
   return {
-    round32:       koTeamsInRound(ko, 'round32',       payload.groups, payload.thirdPlace),
-    round16:       koTeamsInRound(ko, 'round16',       null, null),
-    quarterfinals: koTeamsInRound(ko, 'quarterfinals', null, null),
-    semifinals:    koTeamsInRound(ko, 'semifinals',    null, null),
-    finalist:      finalists,
-    champion:      new Set(champion    ? [champion]    : []),
-    thirdPlace:    new Set(thirdWinner ? [thirdWinner] : [])
+    round32: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.round32)),
+    round16: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.round16)),
+    quarterfinals: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.quarterfinals)),
+    semifinals: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.semifinals)),
+    finalist: new Set(uniqueTeamList([finalMatch.team1, finalMatch.team2, ...getFinalistsFromPayload(payload)])),
+    champion: new Set(champion ? [champion] : []),
+    thirdPlace: new Set(thirdWinner ? [thirdWinner] : [])
   };
 }
 
@@ -3838,53 +3795,6 @@ function closePredictionModal() {
 }
 
 
-function hasAnyRealKnockoutMatch() {
-  const ko = RESULTS?.knockout || {};
-  const matches = ko.matches || {};
-  const rounds = ['round32','round16','quarterfinals','semifinals','thirdPlace','final'];
-
-  if (rounds.some(round => Array.isArray(matches[round]) && matches[round].some(m => m && (m.team1 || m.team2 || m.winner)))) {
-    return true;
-  }
-
-  const winnerRounds = ['round32','round16','quarterfinals','semifinals'];
-  if (winnerRounds.some(round => Array.isArray(ko[round]) && ko[round].some(Boolean))) return true;
-  if (ko.final || ko.champion || RESULTS?.champion) return true;
-  if (ko.thirdPlace || ko.thirdPlaceWinner || RESULTS?.thirdPlaceWinner) return true;
-
-  return false;
-}
-
-function openRealBracketModal() {
-  const modal = document.getElementById('predictionModal');
-  const viewer = document.getElementById('predictionViewer');
-
-  modal.style.display = 'flex';
-  viewer.innerHTML = `
-    <div class="real-bracket-view">
-      <h3>🥊 Cuadro real del Mundial 2026</h3>
-      <p class="note-text">Así va el bracket oficial según los resultados ya confirmados. Lo que aún no se ha jugado aparecerá vacío.</p>
-      <div class="real-bracket-container" id="realBracketContainer"></div>
-    </div>
-  `;
-
-  const container = viewer.querySelector('#realBracketContainer');
-
-  if (!hasAnyRealKnockoutMatch()) {
-    container.innerHTML = '<p class="note-text real-bracket-empty">Todavía no hay ningún partido de eliminatorias jugado. Vuelve cuando empiecen los dieciseisavos.</p>';
-    return;
-  }
-
-  const realState = buildKnockoutReviewState(RESULTS);
-  const pane = document.createElement('div');
-  pane.className = 'bracket-wrapper review-knockout-pane';
-  const bracket = renderKnockoutBracket(realState, '', {
-    extraClass: 'review-knockout-real'
-  });
-  pane.appendChild(bracket);
-  container.appendChild(pane);
-}
-
 function openScoringHelpModal() {
   const modal = document.getElementById('predictionModal');
   const viewer = document.getElementById('predictionViewer');
@@ -3900,6 +3810,7 @@ function openScoringHelpModal() {
             <li>Acertar el 1º del grupo: <strong>${puntuaciones.grupos.posicion.primero} pts</strong></li>
             <li>Acertar el 2º del grupo: <strong>${puntuaciones.grupos.posicion.segundo} pts</strong></li>
             <li>Acertar el 3º del grupo: <strong>${puntuaciones.grupos.posicion.tercero} pts</strong></li>
+			<li>Acertar el 4º del grupo: <strong>${puntuaciones.grupos.posicion.cuarto} pts</strong></li>
             <li>Cada mejor tercero (top 8) acertado: <strong>${puntuaciones.grupos.mejorTercero} pt</strong></li>
             <li>Quiniela 1X2 (3 partidos): <strong>${puntuaciones.quiniela1x2} pt por acierto</strong></li>
           </ul>
@@ -4060,25 +3971,22 @@ function renderPredictionReview(entry) {
     <div class="prediction-review">
       <h3>La predicción de ${entry.name} — ${entry.score} pts</h3>
 
-      <h4 class="group-modal-section-title"><span>🌍</span> FASE DE GRUPOS</h4>
+      <h4>Fase de grupos</h4>
       <div class="review-groups" id="reviewGroups"></div>
 
-      <h4 class="group-modal-section-title"><span>🎯</span> QUINIELA 1X2</h4>
+      <h4>🎯 Quiniela 1X2</h4>
       <div class="review-section" id="reviewQuiniela1x2"></div>
 
-      <h4 class="group-modal-section-title"><span>🥉</span> MEJORES TERCEROS</h4>
-      <div class="review-section" id="reviewThirdPlace"></div>
-
+      <h4>Knockout</h4>
       <div class="review-section" id="reviewKnockout"></div>
 
-      <h4 class="group-modal-section-title"><span>⭐</span> LOGROS INDIVIDUALES</h4>
+      <h4>Logros individuales</h4>
       <div class="review-section" id="reviewAwards"></div>
     </div>
   `;
 
   renderReviewGroups(entry.prediction, entry);
   renderReviewQuiniela1x2(entry.prediction);
-  renderReviewThirdPlace(entry.prediction);
   renderReviewKnockout(entry.prediction);
   renderReviewAwards(entry.prediction);
 }
@@ -4131,8 +4039,12 @@ function calculateThirdPlaceReviewPoints(prediction) {
   return predTop8.reduce((total, team) => total + (realTop8.has(team) ? puntuaciones.grupos.mejorTercero : 0), 0);
 }
 
-function renderReviewPointsBadge(points, title = '') {
-  const cls = points > 0 ? ' review-points-badge got-points' : ' review-points-badge no-points';
+function renderReviewPointsBadge(points, title = '', resolved = false) {
+  const cls = points > 0
+    ? ' review-points-badge got-points'
+    : resolved
+      ? ' review-points-badge wrong-points'
+      : ' review-points-badge no-points';
   return `<span class="${cls}"${title ? ` title="${escapeHtml(title)}"` : ''}>+${points}pt</span>`;
 }
 
@@ -4277,10 +4189,11 @@ function openReadOnlyGroupResultsModal(entry, group) {
     });
   }).join('');
 
-  positionPointsDiv.innerHTML = predOrder.map((team, idx) => {
-    const points = getPredictedGroupPositionPoints(team, idx, realOrder);
-    return `<div class="review-standing-points-row">${renderReviewPointsBadge(points, 'Puntos por esta posición')}</div>`;
-  }).join('');
+positionPointsDiv.innerHTML = predOrder.map((team, idx) => {
+  const points = getPredictedGroupPositionPoints(team, idx, realOrder);
+  const resolved = realOrder && realOrder[idx] !== undefined && realOrder[idx] !== null;
+  return `<div class="review-standing-points-row">${renderReviewPointsBadge(points, 'Puntos por esta posición', resolved)}</div>`;
+}).join('');
 
   if (realOrder.length) {
     realStandingsDiv.innerHTML = realOrder.map((team, idx) => {
@@ -4322,12 +4235,11 @@ function buildKnockoutReviewState(source) {
     const matchNum = Number(item.match);
     if (!Number.isFinite(matchNum)) return;
 
-    // Soportar tanto team1/team2 (apuestas) como home/away (results.js generado por API)
-    const t1 = item.team1 || item.home || null;
-    const t2 = item.team2 || item.away || null;
-
-    if (t1 || t2) {
-      state.matchTeams[matchNum] = { team1: t1, team2: t2 };
+    if (item.team1 || item.team2) {
+      state.matchTeams[matchNum] = {
+        team1: item.team1 || null,
+        team2: item.team2 || null
+      };
     }
 
     if (item.winner) {
@@ -4347,49 +4259,13 @@ function buildKnockoutReviewState(source) {
   function applyRound(roundName, treeRound) {
     const explicitMatches = knockout.matches?.[roundName];
 
-    if (Array.isArray(explicitMatches) && explicitMatches.length > 0) {
-      // Comprobar si algún match ID coincide con el KO_TREE
-      const treeNums = new Set((treeRound || []).map(m => m.num));
-      const hasTreeIds = explicitMatches.some(m => treeNums.has(Number(m.match)));
-
-      if (hasTreeIds) {
-        // Formato con IDs del KO_TREE (apuestas de participantes)
-        explicitMatches.forEach(setExplicitMatch);
-        return;
-      }
-
-      // IDs son de la API (results.js generado automáticamente) — no coinciden con KO_TREE.
-      // Usamos home/away/winner para inferir los equipos en los slots del bracket.
-      explicitMatches.forEach(item => {
-        const t1 = item.team1 || item.home || null;
-        const t2 = item.team2 || item.away || null;
-        const winner = item.winner || null;
-
-        if (!winner && !t1 && !t2) return;
-
-        // Buscar el slot del bracket que tenga uno de estos equipos
-        const match = treeRound.find(m => {
-          const mt = state.matchTeams[m.num] || {};
-          return (t1 && (mt.team1 === t1 || mt.team2 === t1)) ||
-                 (t2 && (mt.team1 === t2 || mt.team2 === t2));
-        });
-
-        if (match) {
-          if (t1 || t2) {
-            state.matchTeams[match.num] = state.matchTeams[match.num] || {};
-            if (t1) state.matchTeams[match.num].team1 = state.matchTeams[match.num].team1 || t1;
-            if (t2) state.matchTeams[match.num].team2 = state.matchTeams[match.num].team2 || t2;
-          }
-          if (winner) setWinnerIfPossible(match, winner);
-        } else if (winner) {
-          // Si no encontramos el slot por equipo, aplicar el winner por nombre
-          const matchByWinner = treeRound.find(m => {
-            const mt = state.matchTeams[m.num] || {};
-            return mt.team1 === winner || mt.team2 === winner;
-          });
-          setWinnerIfPossible(matchByWinner, winner);
-        }
-      });
+    // New payload format: use the official match number as source of truth.
+    // This is important for the leaderboard review because the real bracket may
+    // not be reproducible from the predicted group path. If results.js says
+    // match 101 is Portugal vs Norway, the popup/bracket for match 101 must show
+    // exactly that, regardless of what the computed bracket path would produce.
+    if (Array.isArray(explicitMatches)) {
+      explicitMatches.forEach(setExplicitMatch);
       return;
     }
 
@@ -4840,59 +4716,13 @@ function renderReviewQuiniela1x2(prediction) {
         <span class="team-flag ${getTeamFlagClass(m.team2)}"></span>
         <small class="quiniela1x2-review-group">(Grupo ${escapeHtml(m.group)})</small>
       </div>
-      <div class="quiniela1x2-review-picks">
-        <span class="quiniela1x2-review-pick" title="Tu apuesta">Tuya: <strong>${pred ? escapeHtml(pred) : '—'}</strong></span>
-        <span class="quiniela1x2-review-pick" title="Resultado real">Real: <strong>${resolved ? escapeHtml(real) : '—'}</strong></span>
-        ${renderReviewPointsBadge(points, 'Puntos por este 1X2')}
-      </div>
+<div class="quiniela1x2-review-picks">
+  <span class="quiniela1x2-review-pick" title="Tu apuesta">Tuya: <strong>${pred ? escapeHtml(pred) : '—'}</strong></span>
+  <span class="quiniela1x2-review-pick" title="Resultado real">Real: <strong>${resolved ? escapeHtml(real) : '—'}</strong></span>
+  ${renderReviewPointsBadge(points, 'Puntos por este 1X2', resolved)}
+</div>
     `;
 
-    container.appendChild(row);
-  });
-}
-
-function renderReviewThirdPlace(prediction) {
-  const container = document.getElementById('reviewThirdPlace');
-  if (!container) return;
-  container.innerHTML = '';
-
-  const predTop8 = (prediction.thirdPlace || []).filter(Boolean).slice(0, 8);
-  const realTop8 = new Set((RESULTS.thirdPlace || []).filter(Boolean).slice(0, 8));
-  const resolved = realTop8.size > 0;
-
-  if (!resolved) {
-    container.innerHTML = '<p class="review-pending-note">Aún no hay mejores terceros confirmados.</p>';
-    return;
-  }
-
-  if (predTop8.length === 0) {
-    container.innerHTML = '<p class="review-pending-note">No apostó por ningún mejor tercero.</p>';
-    return;
-  }
-
-  const totalPoints = predTop8.reduce((sum, team) => sum + (realTop8.has(team) ? puntuaciones.grupos.mejorTercero : 0), 0);
-
-  const header = document.createElement('div');
-  header.className = 'quiniela1x2-review-row';
-  header.innerHTML = `<strong>Equipos apostados (top 8):</strong> ${renderReviewPointsBadge(totalPoints, 'Total puntos mejores terceros')}`;
-  container.appendChild(header);
-
-  predTop8.forEach((team, idx) => {
-    const correct = realTop8.has(team);
-    const points  = correct ? puntuaciones.grupos.mejorTercero : 0;
-
-    const row = document.createElement('div');
-    row.className = 'quiniela1x2-review-row' + (correct ? ' review-correct' : (resolved ? ' review-wrong' : ' review-pending'));
-    row.innerHTML = `
-      <div class="quiniela1x2-review-match">
-        <span class="position-badge">${idx + 1}</span>
-        <span class="team-flag ${getTeamFlagClass(team)}"></span>
-        <span class="team-name">${escapeHtml(team)}</span>
-      </div>
-      <div class="quiniela1x2-review-picks">
-        ${renderReviewPointsBadge(points, correct ? 'Acertado' : 'No clasificó entre los 8')}
-      </div>
-    `;
     container.appendChild(row);
   });
 }
@@ -5223,10 +5053,6 @@ async function init() {
   const btnScoringHelp = document.getElementById('btnScoringHelp');
   if (btnScoringHelp) {
     btnScoringHelp.addEventListener('click', openScoringHelpModal);
-  }
-  const btnRealBracket = document.getElementById('btnRealBracket');
-  if (btnRealBracket) {
-    btnRealBracket.addEventListener('click', openRealBracketModal);
   }
   const btnPrizes = document.getElementById('btnPrizes');
   if (btnPrizes) {
