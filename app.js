@@ -3542,21 +3542,51 @@ function getKnockoutStageTeamSets(payload) {
     };
   }
 
-  const reviewState = buildKnockoutReviewState(payload);
-  const finalNum = KO_TREE.final?.[0]?.num;
-  const thirdNum = KO_TREE.thirdPlace?.[0]?.num;
-  const finalMatch = finalNum ? (reviewState.matchTeams?.[finalNum] || {}) : {};
-  const thirdWinner = thirdNum ? reviewState.knockoutResults?.[thirdNum] : getThirdPlaceWinnerFromPayload(payload);
-  const champion = finalNum ? reviewState.knockoutResults?.[finalNum] : getChampionFromPayload(payload);
+  function koTeamsInRound(ko, round, groups, thirdPlace) {
+    const s = new Set();
+
+    if (round === 'round32') {
+      if (groups) {
+        Object.values(groups).forEach(g => { if(g[0]) s.add(g[0]); if(g[1]) s.add(g[1]); });
+        (thirdPlace || []).slice(0, 8).forEach(t => t && s.add(t));
+      }
+      if (s.size === 0) {
+        ((ko.matches || {}).round32 || []).forEach(m => {
+          if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2);
+          if(m.home)  s.add(m.home);  if(m.away)  s.add(m.away);
+        });
+      }
+      return s;
+    }
+
+    const prevRound = {round16:'round32', quarterfinals:'round16', semifinals:'quarterfinals'}[round];
+
+    const prevWinners = (ko[prevRound] || []).filter(Boolean);
+    if (prevWinners.length) { prevWinners.forEach(t => s.add(t)); return s; }
+
+    ((ko.matches || {})[prevRound] || []).forEach(m => { if(m.winner) s.add(m.winner); });
+    if (s.size) return s;
+
+    ((ko.matches || {})[round] || []).forEach(m => {
+      if(m.team1) s.add(m.team1); if(m.team2) s.add(m.team2);
+      if(m.home)  s.add(m.home);  if(m.away)  s.add(m.away);
+    });
+    return s;
+  }
+
+  const ko = payload.knockout || {};
+  const finalists  = new Set(uniqueTeamList(getFinalistsFromPayload(payload)));
+  const champion   = getChampionFromPayload(payload);
+  const thirdWinner = getThirdPlaceWinnerFromPayload(payload);
 
   return {
-    round32: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.round32)),
-    round16: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.round16)),
-    quarterfinals: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.quarterfinals)),
-    semifinals: new Set(getTeamsFromReviewMatches(reviewState, KO_TREE.semifinals)),
-    finalist: new Set(uniqueTeamList([finalMatch.team1, finalMatch.team2, ...getFinalistsFromPayload(payload)])),
-    champion: new Set(champion ? [champion] : []),
-    thirdPlace: new Set(thirdWinner ? [thirdWinner] : [])
+    round32:       koTeamsInRound(ko, 'round32',       payload.groups, payload.thirdPlace),
+    round16:       koTeamsInRound(ko, 'round16',       null, null),
+    quarterfinals: koTeamsInRound(ko, 'quarterfinals', null, null),
+    semifinals:    koTeamsInRound(ko, 'semifinals',    null, null),
+    finalist:      finalists,
+    champion:      new Set(champion    ? [champion]    : []),
+    thirdPlace:    new Set(thirdWinner ? [thirdWinner] : [])
   };
 }
 
