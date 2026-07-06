@@ -3044,3 +3044,9 @@ header .subtitle {
 .countdown-label { font-size:.85rem; opacity:.85; margin-bottom:4px; }
 .countdown-time { font-size:1.3rem; font-weight:700; font-variant-numeric:tabular-nums; }
 .countdown-finished { color:#FF8A65; }
+
+.review-points-badge.wrong-points {
+  background: rgba(211, 47, 47, 0.15);
+  color: #ef5350;
+  border-color: rgba(211, 47, 47, 0.3);
+}
