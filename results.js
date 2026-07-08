@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-07-08T04:35:59.004Z
+   Última actualización: 2026-07-08T07:16:46.107Z
    ============================================================ */
 
 const RESULTS = {
@@ -120,7 +120,8 @@ const RESULTS = {
       "Inglaterra",
       "España",
       "Bélgica",
-      "Argentina"
+      "Argentina",
+      "Suiza"
     ],
     "quarterfinals": [],
     "semifinals": [],
@@ -270,6 +271,11 @@ const RESULTS = {
           "match": 537385,
           "team1": "Noruega",
           "team2": "Inglaterra"
+        },
+        {
+          "match": 537386,
+          "team1": "Argentina",
+          "team2": "Suiza"
         }
       ],
       "semifinals": [],
@@ -422,7 +428,7 @@ const RESULTS = {
           "match": 537382,
           "team1": "Suiza",
           "team2": "Colombia",
-          "winner": ""
+          "winner": "Suiza"
         }
       ],
       "quarterfinals": [],
