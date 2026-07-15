@@ -46,6 +46,24 @@ function groupLetter(raw) {
   return '';
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Numeración oficial de la app (73–104). La app puntúa y pinta el bracket con
+// ESTOS números, no con los match.id de football-data.org (537xxx). Asignamos el
+// número por POSICIÓN dentro de cada ronda, ordenando los partidos por su hora
+// de inicio (utcDate). Si alguna vez ves un cruce raro en la review por partido,
+// es aquí donde hay que mirar: el orden de la API debe coincidir con el orden del
+// bracket. El scoring por rondas NO depende de esto (va por equipos participantes),
+// así que aunque un número baile, los puntos siguen bien.
+// ────────────────────────────────────────────────────────────────────────────
+const APP_NUMS = {
+  round32:       [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88],
+  round16:       [89,90,91,92,93,94,95,96],
+  quarterfinals: [97,98,99,100],
+  semifinals:    [101,102],
+  thirdPlace:    [103],
+  final:         [104],
+};
+
 const QUINIELA_MATCHES = [
   { team1: 'México',   team2: 'Corea del Sur' },
   { team1: 'Escocia',  team2: 'Marruecos'     },
@@ -135,57 +153,81 @@ async function main() {
     'FINAL':          'final',
   };
 
-  // koMatches: solo partidos TERMINADOS, con team1/team2/winner (no home/away)
-  const koMatches = { round32:[], round16:[], quarterfinals:[], semifinals:[], thirdPlace:[], final:[] };
-  // koParticipants: todos los partidos KO (terminados o no), para saber quién participa en cada ronda
+  // Agrupamos los partidos KO crudos por ronda para poder ordenarlos y numerarlos.
+  const rawByRound = { round32:[], round16:[], quarterfinals:[], semifinals:[], thirdPlace:[], final:[] };
+  for (const match of allMatches) {
+    const roundKey = STAGE_MAP[match.stage];
+    if (!roundKey) continue;
+    rawByRound[roundKey].push(match);
+  }
+
+  // Orden estable dentro de cada ronda: por hora de inicio y, a igualdad, por id.
+  // Así el partido i-ésimo de la ronda recibe el número i-ésimo de APP_NUMS.
+  for (const key of Object.keys(rawByRound)) {
+    rawByRound[key].sort((a, b) => {
+      const da = a.utcDate || '', db = b.utcDate || '';
+      if (da !== db) return da < db ? -1 : 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
+  // koMatches: partidos TERMINADOS, con la numeración de la app (73–104).
+  // koParticipants: todos los KO (terminados o no) para saber quién llega a cada ronda.
+  const koMatches      = { round32:[], round16:[], quarterfinals:[], semifinals:[], thirdPlace:[], final:[] };
   const koParticipants = { round32:[], round16:[], quarterfinals:[], semifinals:[], thirdPlace:[], final:[] };
 
   let champion = '', runnerUp = '', thirdPlaceWinner = '';
 
-  for (const match of allMatches) {
-    const roundKey = STAGE_MAP[match.stage];
-    if (!roundKey) continue;
+  for (const roundKey of Object.keys(rawByRound)) {
+    rawByRound[roundKey].forEach((match, idx) => {
+      // Número de la app por POSICIÓN en la ronda (fallback al id si nos quedáramos cortos).
+      const appNum = APP_NUMS[roundKey]?.[idx] ?? match.id;
 
-    const team1  = es(match.homeTeam?.name);
-    const team2  = es(match.awayTeam?.name);
+      const team1 = es(match.homeTeam?.name);
+      const team2 = es(match.awayTeam?.name);
 
-    // Todos los partidos KO (para saber quién llega a cada ronda)
-    if (team1 || team2) {
-      koParticipants[roundKey].push({ match: match.id, team1, team2 });
-    }
+      if (team1 || team2) {
+        koParticipants[roundKey].push({ match: appNum, team1, team2 });
+      }
 
-    // Solo los terminados para saber el ganador
-    if (match.status !== 'FINISHED') continue;
-    const winner = match.score?.winner === 'HOME_TEAM' ? team1
-                 : match.score?.winner === 'AWAY_TEAM' ? team2 : '';
+      if (match.status !== 'FINISHED') return;
 
-    const entry = { match: match.id, team1, team2, winner };
+      const winner = match.score?.winner === 'HOME_TEAM' ? team1
+                   : match.score?.winner === 'AWAY_TEAM' ? team2 : '';
+      const entry = { match: appNum, team1, team2, winner };
 
-    if (roundKey === 'final') {
-      koMatches.final.push(entry);
-      champion  = winner;
-      runnerUp  = winner === team1 ? team2 : team1;
-    } else if (roundKey === 'thirdPlace') {
-      koMatches.thirdPlace.push(entry);
-      thirdPlaceWinner = winner;
-    } else {
-      koMatches[roundKey].push(entry);
-    }
+      if (roundKey === 'final') {
+        koMatches.final.push(entry);
+        champion = winner;
+        runnerUp = winner === team1 ? team2 : team1;
+      } else if (roundKey === 'thirdPlace') {
+        koMatches.thirdPlace.push(entry);
+        thirdPlaceWinner = winner;
+      } else {
+        koMatches[roundKey].push(entry);
+      }
+    });
   }
 
-  // Array simple de ganadores por ronda (los que PASAN a la siguiente)
-  // round32 winners → los que juegan en round16
-  // etc.
+  // Ganadores por ronda (los que PASAN a la siguiente).
   const round32winners = koMatches.round32.map(m => m.winner).filter(Boolean);
   const round16winners = koMatches.round16.map(m => m.winner).filter(Boolean);
   const qfWinners      = koMatches.quarterfinals.map(m => m.winner).filter(Boolean);
   const sfWinners      = koMatches.semifinals.map(m => m.winner).filter(Boolean);
 
-  const semifinalists = allMatches
-    .filter(m => m.stage === 'SEMI_FINALS')
+  const semifinalists = rawByRound.semifinals
     .flatMap(m => [es(m.homeTeam?.name), es(m.awayTeam?.name)])
     .filter(Boolean);
-  const finalists = champion && runnerUp ? [champion, runnerUp] : [];
+
+  // ── Finalistas ────────────────────────────────────────────────────────────
+  // BUG ANTERIOR: solo se rellenaba finalists cuando ya había campeón Y subcampeón,
+  // es decir, con la final jugada. Ahora los derivamos de los GANADORES de semis,
+  // así que en cuanto España gana su semi ya figura como finalista (y suma sus 20
+  // puntos), aunque la final aún no se haya jugado. Si la final ya se jugó, usamos
+  // campeón + subcampeón (que es el par completo y ordenado).
+  const finalists = (champion && runnerUp)
+    ? [champion, runnerUp]
+    : sfWinners.slice();
 
   // ── Mejores terceros ──────────────────────────────────────────────────────
   const thirdTeams = [];
@@ -205,9 +247,8 @@ async function main() {
     thirdPlace,
     quiniela1x2,
     knockout: {
-      // Arrays simples de GANADORES por ronda (los que avanzan)
-      round32:       round32winners,   // ganadores de R32 = participantes en R16
-      round16:       round16winners,   // ganadores de R16 = participantes en QF
+      round32:       round32winners,
+      round16:       round16winners,
       quarterfinals: qfWinners,
       semifinals:    sfWinners,
       champion,
@@ -216,7 +257,6 @@ async function main() {
       thirdPlaceWinner,
       final:         champion,
       thirdPlace:    thirdPlaceWinner,
-      // Participantes en cada ronda (team1+team2, terminados o no)
       participants: {
         round32:       koParticipants.round32,
         round16:       koParticipants.round16,
@@ -225,7 +265,6 @@ async function main() {
         thirdPlace:    koParticipants.thirdPlace,
         final:         koParticipants.final,
       },
-      // Matches terminados con team1/team2/winner
       matches: koMatches,
     },
     semifinalists,
@@ -251,6 +290,7 @@ const RESULTS = ${JSON.stringify(RESULTS, null, 2)};
   console.log(`   Quiniela 1X2:       ${Object.values(quiniela1x2).filter(v=>v).length}/3`);
   console.log(`   R32 jugados:        ${koMatches.round32.length}/16`);
   console.log(`   R16 jugados:        ${koMatches.round16.length}/8`);
+  console.log(`   Finalistas:         ${finalists.join(', ') || '(pendiente)'}`);
   console.log(`   Campeón:            ${champion || '(pendiente)'}`);
 }
 
