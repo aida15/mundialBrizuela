@@ -505,7 +505,7 @@ const RESULTS = {
     "Inglaterra",
     "Argentina"
   ],
-  "finalists": [],
+  "finalists": ["España"],
   "champion": "",
   "runnerUp": "",
   "thirdPlaceWinner": "",
