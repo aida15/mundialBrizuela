@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-07-16T04:27:42.603Z
+   Última actualización: 2026-07-16T07:04:48.256Z
    ============================================================ */
 
 const RESULTS = {
@@ -305,14 +305,14 @@ const RESULTS = {
         {
           "match": 103,
           "team1": "Francia",
-          "team2": ""
+          "team2": "Inglaterra"
         }
       ],
       "final": [
         {
           "match": 104,
           "team1": "España",
-          "team2": ""
+          "team2": "Argentina"
         }
       ]
     },
