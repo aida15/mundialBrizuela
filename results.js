@@ -537,10 +537,10 @@ const RESULTS = {
   "runnerUp": "Argentina",
   "thirdPlaceWinner": "Inglaterra",
   "awards": {
-    "topScorer": "",
-    "topAssister": "",
-    "goldenGlove": "",
-    "topScoringTeam": "",
-    "mostConcededTeam": ""
+        "topScorer": "Kylian Mbappé",
+    "topAssister": "Michael Olise",
+    "goldenGlove": "Unai Simón",
+    "topScoringTeam": "Francia",
+    "mostConcededTeam": "Irak"
   }
 };
