@@ -1,7 +1,7 @@
 /* ============================================================
    Resultados oficiales del Mundial 2026.
    Generado automáticamente por update-results.js
-   Última actualización: 2026-07-19T23:14:06.443Z
+   Última actualización: 2026-07-20T00:15:58.447Z
    ============================================================ */
 
 const RESULTS = {
@@ -537,10 +537,10 @@ const RESULTS = {
   "runnerUp": "Argentina",
   "thirdPlaceWinner": "Inglaterra",
   "awards": {
-        "topScorer": "Kylian Mbappé",
-    "topAssister": "Michael Olise",
-    "goldenGlove": "Unai Simón",
-    "topScoringTeam": "Francia",
-    "mostConcededTeam": "Irak"
+    "topScorer": "",
+    "topAssister": "",
+    "goldenGlove": "",
+    "topScoringTeam": "",
+    "mostConcededTeam": ""
   }
 };
